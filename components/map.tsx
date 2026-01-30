@@ -139,14 +139,16 @@ export default function Map({ users = dummyUsers }: MapProps) {
   }, [users])
 
   return (
-    <div className="relative w-full h-[500px]">
+    <div className="relative w-full h-[520px] rounded-b-[32px] border-b border-[#f2e2c9] shadow-[0_20px_60px_-50px_rgba(164,133,94,0.6)] overflow-hidden">
       <div ref={containerRef} className="w-full h-full" />
 
       {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#fdf8f1]">
           <div className="text-center">
-            <p className="text-lg text-gray-700">加载地图中…</p>
-            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+            <p className="text-lg text-[#6e8fb1]">加载地图中…</p>
+            {error && (
+              <p className="text-sm text-[#c97c63] mt-2">{error}</p>
+            )}
           </div>
         </div>
       )}
