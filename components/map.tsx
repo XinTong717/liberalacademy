@@ -84,11 +84,31 @@ export default function Map({ users = dummyUsers }: MapProps) {
         if (!AMap) throw new Error('AMap not found on window')
         if (!containerRef.current) throw new Error('Map container not ready')
 
+          const markerIconSvg = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+            <defs>
+              <linearGradient id="wing" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#9ed3d6"/>
+                <stop offset="100%" stop-color="#7bb6c8"/>
+              </linearGradient>
+            </defs>
+            <path d="M16 1.5C9.1 1.5 3.6 7 3.6 13.9c0 6.8 8 17.3 12.4 23.4 4.4-6.1 12.4-16.6 12.4-23.4C28.4 7 22.9 1.5 16 1.5z" fill="#fbf7ee" stroke="#6e8fb1" stroke-width="1.4"/>
+            <circle cx="16" cy="14" r="6.2" fill="#f6d38c" stroke="#e1b76d" stroke-width="1"/>
+            <path d="M8 12.5c3.8-5 8.5-5 16 0" fill="none" stroke="url(#wing)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        `
+        const markerIcon = new AMap.Icon({
+          image: `data:image/svg+xml;utf8,${encodeURIComponent(markerIconSvg)}`,
+          size: new AMap.Size(32, 40),
+          imageSize: new AMap.Size(32, 40),
+        })
+
         // 初始化地图（只做最小配置）
         const map = new AMap.Map(containerRef.current, {
           zoom: 5,
           center: [116.397428, 39.90923],
           viewMode: '3D',
+          mapStyle: 'amap://styles/whitesmoke',
         })
         mapRef.current = map
 
@@ -98,6 +118,8 @@ export default function Map({ users = dummyUsers }: MapProps) {
             position: [u.lng, u.lat],
             title: `${u.name} - ${u.city}`,
             label: { content: u.city, direction: 'right' },
+            icon: markerIcon,
+            offset: new AMap.Pixel(-16, -36),
           })
 
           marker.on('click', () => {
