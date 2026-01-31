@@ -8,19 +8,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
-  const [phone, setPhone] = useState('')
-  const [countryCode, setCountryCode] = useState('+86')
+  const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
- 
-  const normalizeE164 = (dialCode: string, raw: string) => {
-    const normalizedDialCode = dialCode.replace(/\s+/g, '')
-    const cleaned = raw.replace(/[^0-9]/g, '')
-    if (!normalizedDialCode.startsWith('+') || !cleaned) {
-      return ''
-    }
-    return `${normalizedDialCode}${cleaned}`
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,24 +20,15 @@ export default function LoginPage() {
     try {
       const supabase = createClient()
 
-      if (phone) {
-        const normalizedPhone = normalizeE164(countryCode, phone)
-        if (!normalizedPhone) {
-          setMessage('请输入有效的国际手机号，例如 +1 4150000000')
-          return
-        }
-        // SMS login (Magic Link via phone)
+      if (email) {
         const { error } = await supabase.auth.signInWithOtp({
-          phone: normalizedPhone,
-          options: {
-            channel: 'sms',
-          },
+          email: email,
         })
 
         if (error) {
           setMessage(`错误: ${error.message}`)
         } else {
-          setMessage('验证码已发送到您的手机，请查收！')
+          setMessage('验证码已发送到您的邮箱，请查收！')
         }
       }
     } catch (error: any) {
@@ -63,44 +44,25 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle>登录</CardTitle>
           <CardDescription>
-            使用手机号登录自由学社
+            使用邮箱验证码登录自由学社
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium mb-2">
+              <label htmlFor="email" className="block text-sm font-medium mb-2">
                 手机号
               </label>
-              <div className="flex gap-2">
-                <select
-                  id="countryCode"
-                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                >
-                  <option value="+1">+1 美国/加拿大</option>
-                  <option value="+44">+44 英国</option>
-                  <option value="+49">+49 德国</option>
-                  <option value="+61">+61 澳大利亚</option>
-                  <option value="+65">+65 新加坡</option>
-                  <option value="+81">+81 日本</option>
-                  <option value="+82">+82 韩国</option>
-                  <option value="+86">+86 中国大陆</option>
-                  <option value="+852">+852 中国香港</option>
-                  <option value="+886">+886 中国台湾</option>
-                </select>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="请输入手机号"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
-              </div>
+              <Input
+                id="email"
+                type="email"
+                placeholder="请输入邮箱"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
               <p className="text-xs text-gray-500 mt-2">
-                支持国际号码格式，系统将自动拼接国家区号发送短信验证码。
+                我们将向您的邮箱发送验证码用于登录或注册。
               </p>
             </div>
 
@@ -115,7 +77,7 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? '发送中...' : '发送验证码/链接'}
+              {isLoading ? '发送中...' : '发送邮箱验证码'}
             </Button>
           </form>
 

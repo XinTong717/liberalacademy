@@ -104,7 +104,7 @@ export default function ProfilePage() {
         <CardContent>
           <div className="mb-4 p-3 bg-gray-50 rounded-md">
             <p className="text-sm text-gray-600">
-              <strong>用户:</strong> {user.email || user.phone || '未设置'}
+              <strong>用户:</strong> {user.email || '未设置'}
             </p>
           </div>
 
