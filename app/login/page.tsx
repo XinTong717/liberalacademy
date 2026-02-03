@@ -91,7 +91,7 @@ export default function LoginPage() {
 
       if (mode === 'login') {
         const { data, error } = await supabase
-          .from('user_accounts')
+          .from('profiles')
           .select('id, username')
           .eq('username', username)
           .eq('password', password)
@@ -117,7 +117,7 @@ export default function LoginPage() {
       }
 
       const { data: existingUser, error: existingError } = await supabase
-        .from('user_accounts')
+        .from('profiles')
         .select('id')
         .eq('username', username)
         .maybeSingle()
@@ -133,7 +133,7 @@ export default function LoginPage() {
       }
 
           const { error: insertError } = await supabase
-        .from('user_accounts')
+        .from('profiles')
         .insert({
           username,
           password,
