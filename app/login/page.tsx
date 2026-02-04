@@ -29,6 +29,11 @@ const locationOptions = {
   },
 }
 
+const getMissingColumn = (message: string) => {
+  const match = message.match(/column ["']?([^"']+)["']? of relation/i)
+  return match ? match[1] : null
+}
+
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [username, setUsername] = useState('')
@@ -132,15 +137,34 @@ export default function LoginPage() {
         return
       }
 
-          const { error: insertError } = await supabase
-        .from('profiles')
-        .insert({
-          username,
-          password,
-          country,
-          province,
-          city,
-        })
+      let profilePayload: Record<string, string> = {
+        username,
+        password,
+        country,
+        province,
+        city,
+      }
+      let insertError: Error | null = null
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const { error } = await supabase
+          .from('profiles')
+          .insert(profilePayload)
+
+        if (!error) {
+          insertError = null
+          break
+        }
+
+        const missingColumn = getMissingColumn(error.message)
+        if (missingColumn && missingColumn in profilePayload) {
+          const { [missingColumn]: _, ...rest } = profilePayload
+          profilePayload = rest
+          continue
+        }
+
+        insertError = error
+        break
+      }
 
       if (insertError) {
         setMessage(`错误: ${insertError.message}`)

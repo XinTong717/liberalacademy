@@ -15,6 +15,11 @@ export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
 
+  const getMissingColumn = (message: string) => {
+    const match = message.match(/column ["']?([^"']+)["']? of relation/i)
+    return match ? match[1] : null
+  }
+
   useEffect(() => {
     const loadUser = async () => {
       const supabase = createClient()
@@ -28,13 +33,21 @@ export default function ProfilePage() {
       setUser(user)
 
       // Load existing profile data
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('city')
         .eq('id', user.id)
         .single()
 
-      if (profile?.city) {
+      if (error) {
+        const missingColumn = getMissingColumn(error.message)
+        if (!missingColumn) {
+          setMessage(`错误: ${error.message}`)
+        }
+        return
+      }
+
+        if (profile?.city) {
         setCity(profile.city)
       }
     }
@@ -58,16 +71,40 @@ export default function ProfilePage() {
       }
 
       // Upsert profile data
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          city: city,
-          updated_at: new Date().toISOString(),
-        })
+      let profilePayload: Record<string, string> = {
+        id: user.id,
+        city: city,
+        updated_at: new Date().toISOString(),
+      }
+      let saveError: Error | null = null
+      const removedColumns = new Set<string>()
 
-      if (error) {
-        setMessage(`错误: ${error.message}`)
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert(profilePayload)
+
+        if (!error) {
+          saveError = null
+          break
+        }
+
+        const missingColumn = getMissingColumn(error.message)
+        if (missingColumn && missingColumn in profilePayload) {
+          const { [missingColumn]: _, ...rest } = profilePayload
+          profilePayload = rest
+          removedColumns.add(missingColumn)
+          continue
+        }
+
+        saveError = error
+        break
+      }
+
+      if (saveError) {
+        setMessage(`错误: ${saveError.message}`)
+      } else if (removedColumns.has('city')) {
+        setMessage('当前数据库未配置城市字段，已跳过保存。')
       } else {
         setMessage('城市信息已保存！')
       }
