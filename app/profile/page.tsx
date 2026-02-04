@@ -9,16 +9,13 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 export default function ProfilePage() {
+  const [country, setCountry] = useState('')
+  const [province, setProvince] = useState('')
   const [city, setCity] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
-
-  const getMissingColumn = (message: string) => {
-    const match = message.match(/column ["']?([^"']+)["']? of relation/i)
-    return match ? match[1] : null
-  }
 
   useEffect(() => {
     const loadUser = async () => {
@@ -35,19 +32,24 @@ export default function ProfilePage() {
       // Load existing profile data
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('city')
+        .select('country, province, city')
         .eq('id', user.id)
         .single()
 
       if (error) {
-        const missingColumn = getMissingColumn(error.message)
-        if (!missingColumn) {
-          setMessage(`错误: ${error.message}`)
-        }
+        setMessage(`错误: ${error.message}`)
         return
       }
 
-        if (profile?.city) {
+      if (profile?.country) {
+        setCountry(profile.country)
+      }
+
+      if (profile?.province) {
+        setProvince(profile.province)
+      }
+
+      if (profile?.city) {
         setCity(profile.city)
       }
     }
@@ -71,40 +73,20 @@ export default function ProfilePage() {
       }
 
       // Upsert profile data
-      let profilePayload: Record<string, string> = {
+      const profilePayload = {
         id: user.id,
-        city: city,
+        country,
+        province,
+        city,
         updated_at: new Date().toISOString(),
       }
-      let saveError: Error | null = null
-      const removedColumns = new Set<string>()
-
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        const { error } = await supabase
-          .from('profiles')
-          .upsert(profilePayload)
-
-        if (!error) {
-          saveError = null
-          break
-        }
-
-        const missingColumn = getMissingColumn(error.message)
-        if (missingColumn && missingColumn in profilePayload) {
-          const { [missingColumn]: _, ...rest } = profilePayload
-          profilePayload = rest
-          removedColumns.add(missingColumn)
-          continue
-        }
-
-        saveError = error
-        break
-      }
+      console.info('Saving profile with location data', profilePayload)
+      const { error: saveError } = await supabase
+        .from('profiles')
+        .upsert(profilePayload)
 
       if (saveError) {
         setMessage(`错误: ${saveError.message}`)
-      } else if (removedColumns.has('city')) {
-        setMessage('当前数据库未配置城市字段，已跳过保存。')
       } else {
         setMessage('城市信息已保存！')
       }

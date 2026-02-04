@@ -29,10 +29,6 @@ const locationOptions = {
   },
 }
 
-const getMissingColumn = (message: string) => {
-  const match = message.match(/column ["']?([^"']+)["']? of relation/i)
-  return match ? match[1] : null
-}
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
@@ -148,7 +144,7 @@ export default function LoginPage() {
         return
       }
 
-      let profilePayload: Record<string, string> = {
+      const profilePayload = {
         id: user.id,
         username,
         display_name: username,
@@ -156,27 +152,10 @@ export default function LoginPage() {
         province,
         city,
       }
-      let insertError: Error | null = null
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        const { error } = await supabase
-          .from('profiles')
-          .upsert(profilePayload)
-
-        if (!error) {
-          insertError = null
-          break
-        }
-
-        const missingColumn = getMissingColumn(error.message)
-        if (missingColumn && missingColumn in profilePayload) {
-          const { [missingColumn]: _, ...rest } = profilePayload
-          profilePayload = rest
-          continue
-        }
-
-        insertError = error
-        break
-      }
+      console.info('Upserting profile with location data', profilePayload)
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .upsert(profilePayload)
 
       if (insertError) {
         setMessage(`错误: ${insertError.message}`)
