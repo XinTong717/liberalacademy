@@ -1,0 +1,25 @@
+# 核心：绝对不要上传本地依赖和构建产物
+node_modules
+.next
+build
+dist
+
+# 版本控制和日志
+.git
+.gitignore
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 环境变量 (安全起见，防止把本地密钥传上去)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Mac/VSCode 系统垃圾文件
+.DS_Store
+.vscode
+.idea
