@@ -95,24 +95,18 @@ export default function LoginPage() {
       const supabase = createClient()
 
       if (mode === 'login') {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, username')
-          .eq('username', username)
-          .eq('password', password)
-          .maybeSingle()
+        const email = `${username}@users.liberalacademy.site`
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
 
         if (error) {
           setMessage(`错误: ${error.message}`)
           return
         }
 
-        if (!data) {
-          setMessage('用户名或密码不正确，请重新输入。')
-          return
-        }
-
-        setMessage(`欢迎回来，${data.username}！登录成功。`)
+        setMessage(`欢迎回来，${username}！登录成功。`)
         return
       }
 
@@ -137,9 +131,27 @@ export default function LoginPage() {
         return
       }
 
-      let profilePayload: Record<string, string> = {
-        username,
+      const email = `${username}@users.liberalacademy.site`
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
         password,
+      })
+
+      if (signUpError) {
+        setMessage(`错误: ${signUpError.message}`)
+        return
+      }
+
+      const user = signUpData.user
+      if (!user) {
+        setMessage('注册失败，请稍后再试。')
+        return
+      }
+
+      let profilePayload: Record<string, string> = {
+        id: user.id,
+        username,
+        display_name: username,
         country,
         province,
         city,
@@ -148,7 +160,7 @@ export default function LoginPage() {
       for (let attempt = 0; attempt < 3; attempt += 1) {
         const { error } = await supabase
           .from('profiles')
-          .insert(profilePayload)
+          .upsert(profilePayload)
 
         if (!error) {
           insertError = null
