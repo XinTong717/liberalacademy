@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authReady, setAuthReady] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -17,6 +18,7 @@ export default function Home() {
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return
       setIsAuthenticated(Boolean(data.session?.user))
+      setAuthReady(true)
     })
 
     const {
@@ -24,6 +26,7 @@ export default function Home() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return
       setIsAuthenticated(Boolean(session?.user))
+      setAuthReady(true)
     })
 
     return () => {
@@ -55,12 +58,23 @@ export default function Home() {
 
         {/* Navigation overlay */}
         <div className="flex flex-wrap gap-2 sm:justify-end sm:gap-3">
-          <Link
-            href={isAuthenticated ? '/profile' : '/login'}
-            className="rounded-full bg-white/95 px-5 py-2.5 text-sm font-semibold text-[#4a709a] shadow-md ring-1 ring-[#e7d4b5] transition-colors hover:bg-white"
-          >
-            {isAuthenticated ? '完善个人信息' : '登录'}登录
-          </Link>
+          {!authReady ? null : isAuthenticated ? (
+            <Link
+              href="/profile"
+              className="rounded-full bg-white/95 px-5 py-2.5 text-sm font-semibold text-[#4a709a] shadow-md ring-1 ring-[#e7d4b5] transition-colors hover:bg-white"
+            >
+              完善个人信息
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="rounded-full bg-white/95 px-5 py-2.5 text-sm font-semibold text-[#4a709a] shadow-md ring-1 ring-[#e7d4b5] transition-colors hover:bg-white"
+              >
+                注册 / 登录
+              </Link>
+            </>
+          )}
           <Link
             href="/communities"
             className="rounded-full bg-[#e8f3f6]/95 px-5 py-2.5 text-sm font-semibold text-[#3f7d84] shadow-md ring-1 ring-[#b9dfd7] transition-colors hover:bg-[#f0fafb]"
