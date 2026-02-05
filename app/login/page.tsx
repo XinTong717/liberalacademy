@@ -177,16 +177,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-[#f8f4ec] px-4 py-8">
+      <Card className="w-full max-w-md border-[#ead8bc] bg-[#fffdf9] text-[#334e68] shadow-lg">
         <CardHeader>
-          <CardTitle>登录</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-[#3f638c]">登录</CardTitle>
+          <CardDescription className="text-[#5f7591]">
             使用用户名和密码登录，或注册新账号
           </CardDescription>
         </CardHeader>
         <CardContent>
-        <div className="mb-4 grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1 text-sm">
+          <div className="mb-4 grid grid-cols-2 gap-2 rounded-lg bg-[#f2ecdf] p-1 text-sm">
             <button
               type="button"
               onClick={() => {
@@ -194,7 +194,7 @@ export default function LoginPage() {
                 setMessage('')
               }}
               className={`rounded-md px-3 py-2 transition ${
-                mode === 'login' ? 'bg-white shadow text-gray-900' : 'text-gray-600'
+                mode === 'login' ? 'bg-white shadow text-[#314c67]' : 'text-[#6c7f96]'
               }`}
             >
               登录
@@ -206,7 +206,7 @@ export default function LoginPage() {
                 setMessage('')
               }}
               className={`rounded-md px-3 py-2 transition ${
-                mode === 'register' ? 'bg-white shadow text-gray-900' : 'text-gray-600'
+                mode === 'register' ? 'bg-white shadow text-[#314c67]' : 'text-[#6c7f96]'
               }`}
             >
               注册
@@ -274,7 +274,7 @@ export default function LoginPage() {
                       id="country"
                       name="country"
                       autoComplete="country-name"
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      className="h-10 rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66]"
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
                       required
@@ -290,7 +290,7 @@ export default function LoginPage() {
                       id="province"
                       name="province"
                       autoComplete="address-level1"
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      className="h-10 rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66]"
                       value={province}
                       onChange={(e) => setProvince(e.target.value)}
                       required
@@ -306,7 +306,7 @@ export default function LoginPage() {
                       id="city"
                       name="city"
                       autoComplete="address-level2"
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      className="h-10 rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66]"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       required
@@ -316,7 +316,7 @@ export default function LoginPage() {
                       ))}
                     </select>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="mt-2 text-xs text-[#6f8299]">
                     注册信息将保存到后台数据库中。
                   </p>
                 </div>
@@ -333,13 +333,13 @@ export default function LoginPage() {
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full  bg-[#6e8fb1] text-white hover:bg-[#5d7fa2]" disabled={isLoading}>
               {isLoading ? '处理中...' : mode === 'login' ? '登录' : '注册'}
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm">
-            <Link href="/" className="text-gray-600 hover:text-gray-900">
+            <Link href="/" className="text-[#6f8299] hover:text-[#3f638c]">
               返回首页
             </Link>
           </div>

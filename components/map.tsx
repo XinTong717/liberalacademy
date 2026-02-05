@@ -256,7 +256,21 @@ export default function Map() {
       const marker = new AMap.Marker({
         position: [u.lng, u.lat],
         title: `${u.name} - ${u.city}`,
-        label: { content: u.city, direction: 'right' },
+        label: {
+          content: u.city,
+          direction: 'right',
+          offset: new AMap.Pixel(10, -4),
+          style: {
+            color: '#1f4568',
+            border: '1px solid #e6cfaa',
+            background: 'rgba(255, 252, 245, 0.96)',
+            borderRadius: '999px',
+            fontSize: '12px',
+            padding: '4px 10px',
+            fontWeight: '600',
+            boxShadow: '0 6px 16px rgba(61, 84, 114, 0.14)',
+          },
+        },
         icon: markerIcon,
         offset: new AMap.Pixel(-16, -36),
       })
@@ -274,7 +288,7 @@ export default function Map() {
   }, [users])
 
   return (
-    <div className="relative w-full h-[520px] rounded-b-[32px] border-b border-[#f2e2c9] shadow-[0_20px_60px_-50px_rgba(164,133,94,0.6)] overflow-hidden">
+    <div className="relative h-screen w-full overflow-hidden border-b border-[#f2e2c9] shadow-[0_20px_60px_-50px_rgba(164,133,94,0.6)]">
       <div ref={containerRef} className="w-full h-full" />
 
       {(!loaded || error) && (
