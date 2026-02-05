@@ -1,9 +1,37 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Map from '@/components/map'
 import Image from 'next/image'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    let active = true
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return
+      setIsAuthenticated(Boolean(data.session?.user))
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return
+      setIsAuthenticated(Boolean(session?.user))
+    })
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#fbf7ee]">
       <Map />
@@ -28,10 +56,10 @@ export default function Home() {
         {/* Navigation overlay */}
         <div className="flex flex-wrap gap-2 sm:justify-end sm:gap-3">
           <Link
-            href="/login"
+            href={isAuthenticated ? '/profile' : '/login'}
             className="rounded-full bg-white/95 px-5 py-2.5 text-sm font-semibold text-[#4a709a] shadow-md ring-1 ring-[#e7d4b5] transition-colors hover:bg-white"
           >
-            登录
+            {isAuthenticated ? '完善个人信息' : '登录'}登录
           </Link>
           <Link
             href="/communities"
