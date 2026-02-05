@@ -6,22 +6,31 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
+
+type Gender = '男' | '女' | '其他'
 
 export default function ProfilePage() {
   const [country, setCountry] = useState('')
   const [province, setProvince] = useState('')
   const [city, setCity] = useState('')
+  const [nickname, setNickname] = useState('')
+  const [gender, setGender] = useState<Gender | ''>('')
+  const [age, setAge] = useState('')
+  const [bio, setBio] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     const loadUser = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+            
       if (!user) {
         router.push('/login')
         return

@@ -2,6 +2,7 @@ import Map from '@/components/map'
 import Image from 'next/image'
 import Link from 'next/link'
 
+
 export default function Home() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#fbf7ee]">

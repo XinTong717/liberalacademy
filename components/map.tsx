@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 type User = {
   id: string
@@ -78,6 +79,9 @@ export default function Map() {
   const [users, setUsers] = useState<User[]>([])
   const [usersError, setUsersError] = useState<string | null>(null)
   const [usersLoading, setUsersLoading] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [authReady, setAuthReady] = useState(false)
+  const [showLoginHint, setShowLoginHint] = useState(false)
 
   const usersEmptyMessage = useMemo(() => {
     if (usersLoading) return '正在加载注册用户…'
@@ -85,6 +89,30 @@ export default function Map() {
     if (!users.length) return '暂无注册用户可显示。'
     return null
   }, [usersLoading, usersError, users.length])
+
+  useEffect(() => {
+    const supabase = createClient()
+    let active = true
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return
+      setIsAuthenticated(Boolean(data.session?.user))
+      setAuthReady(true)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return
+      setIsAuthenticated(Boolean(session?.user))
+      setAuthReady(true)
+    })
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
+  }, [])
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_AMAP_KEY
@@ -245,7 +273,7 @@ export default function Map() {
     const AMap = amapRef.current
     const markerIcon = markerIconRef.current
 
-    if (!map || !AMap || !markerIcon) return
+    if (!map || !AMap || !markerIcon || !authReady) return
 
     if (markersRef.current.length) {
       markersRef.current.forEach((marker) => map.remove(marker))
@@ -253,22 +281,23 @@ export default function Map() {
     }
 
     users.forEach((u) => {
+      const markerLabel = isAuthenticated ? `${u.city} · ${u.name}` : '已注册用户'
       const marker = new AMap.Marker({
         position: [u.lng, u.lat],
-        title: `${u.name} - ${u.city}`,
+        title: isAuthenticated ? `${u.name} - ${u.city}` : '登录后查看用户信息',
         label: {
-          content: u.city,
+          content: markerLabel,
           direction: 'right',
           offset: new AMap.Pixel(10, -4),
           style: {
-            color: '#1f4568',
-            border: '1px solid #e6cfaa',
-            background: 'rgba(255, 252, 245, 0.96)',
+            color: isAuthenticated ? '#1a3553' : '#46617a',
+            border: '1px solid #ddbf92',
+            background: isAuthenticated ? 'rgba(255, 252, 245, 0.96)' : 'rgba(255, 252, 245, 0.88)',
             borderRadius: '999px',
             fontSize: '12px',
             padding: '4px 10px',
-            fontWeight: '600',
-            boxShadow: '0 6px 16px rgba(61, 84, 114, 0.14)',
+            fontWeight: isAuthenticated ? '700' : '600',
+            boxShadow: '0 6px 16px rgba(48, 72, 99, 0.18)',
           },
         },
         icon: markerIcon,
@@ -276,20 +305,44 @@ export default function Map() {
       })
 
       marker.on('click', () => {
+        if (!isAuthenticated) {
+          setShowLoginHint(true)
+          return
+        }
+
         const infoWindow = new AMap.InfoWindow({
-          content: `<div style="padding:10px;"><strong>${u.name}</strong><br/>城市: ${u.city}</div>`,
+          content: `<div style="padding:10px 12px;color:#1a3553;line-height:1.6;font-size:13px;"><strong style=\"font-size:14px;color:#14304d;\">${u.name}</strong><br/>所在地：${u.city}</div>`,
         })
         infoWindow.open(map, [u.lng, u.lat])
       })
 
       map.add(marker)
       markersRef.current.push(marker)
-    })  
-  }, [users])
+    })
+
+    const onZoomEnd = () => {
+      if (isAuthenticated) return
+      const zoom = map.getZoom()
+      if (zoom > 5.6) {
+        map.setZoom(5.6)
+        setShowLoginHint(true)
+      }
+    }
+
+    map.on('zoomend', onZoomEnd)
+
+    return () => {
+      map.off('zoomend', onZoomEnd)
+    }
+  }, [users, isAuthenticated, authReady])
 
   return (
     <div className="relative h-screen w-full overflow-hidden border-b border-[#f2e2c9] shadow-[0_20px_60px_-50px_rgba(164,133,94,0.6)]">
       <div ref={containerRef} className="w-full h-full" />
+
+      {authReady && !isAuthenticated && (
+        <div className="pointer-events-none absolute inset-0 bg-[#fdf8ef]/15 backdrop-blur-[1.8px]" />
+      )}
 
       {(!loaded || error) && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#fdf8f1]">
@@ -302,9 +355,34 @@ export default function Map() {
         </div>
       )}
 
-{loaded && !error && usersEmptyMessage && (
-        <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-sm text-[#6e8fb1] shadow-md ring-1 ring-[#e7d4b5]">
+      {loaded && !error && usersEmptyMessage && !showLoginHint && (
+          <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-sm text-[#46617a] shadow-md ring-1 ring-[#e7d4b5]">
           {usersEmptyMessage}
+        </div>
+      )}
+
+      {authReady && !isAuthenticated && !showLoginHint && (
+        <div className="absolute inset-x-4 bottom-6 z-20 sm:left-6 sm:right-auto sm:max-w-md">
+          <div className="pointer-events-auto rounded-2xl border border-[#e5cfad] bg-white/93 px-4 py-3 text-[#32567a] shadow-xl backdrop-blur">
+            <p className="text-sm font-semibold text-[#294d73]">登录后可查看地图上的用户名与所在地</p>
+            <p className="mt-1 text-xs text-[#547293]">
+              目前仅展示模糊分布，点击标记或放大地图将提示登录。
+            </p>
+            <div className="mt-3">
+              <Link
+                href="/login"
+                className="inline-flex rounded-full bg-[#2f6696] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#285884]"
+              >
+                先注册 / 登录
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLoginHint && !isAuthenticated && (
+        <div className="absolute right-4 top-24 z-30 rounded-xl border border-[#e1c59f] bg-[#fff9f1]/95 px-3 py-2 text-xs font-medium text-[#8f5c2f] shadow-lg">
+          请先登录后查看详细用户信息
         </div>
       )}
     </div>
