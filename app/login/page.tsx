@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 const locationOptions = {
   中国: {
@@ -40,6 +41,7 @@ export default function LoginPage() {
   const [city, setCity] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const router = useRouter()
 
   const provinces = useMemo(() => {
     return Object.keys(locationOptions[country as keyof typeof locationOptions] ?? {})
@@ -103,6 +105,7 @@ export default function LoginPage() {
         }
 
         setMessage(`欢迎回来，${username}！登录成功。`)
+        router.push('/')
         return
       }
 

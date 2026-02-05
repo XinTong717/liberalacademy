@@ -1,27 +1,14 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-
-// Dummy user data - replace with real data from Supabase later
-const dummyUsers = [
-  { id: 1, name: '张三', city: '北京', lat: 39.9042, lng: 116.4074 },
-  { id: 2, name: '李四', city: '上海', lat: 31.2304, lng: 121.4737 },
-  { id: 3, name: '王五', city: '广州', lat: 23.1291, lng: 113.2644 },
-  { id: 4, name: '赵六', city: '深圳', lat: 22.5431, lng: 114.0579 },
-  { id: 5, name: '孙七', city: '杭州', lat: 30.2741, lng: 120.1551 },
-  { id: 6, name: '周八', city: '成都', lat: 30.6624, lng: 104.0633 },
-]
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 type User = {
-  id: number
+  id: string
   name: string
   city: string
   lat: number
   lng: number
-}
-
-interface MapProps {
-  users?: User[]
 }
 
 declare global {
@@ -52,12 +39,24 @@ function loadAMap(key: string): Promise<any> {
   })
 }
 
-export default function Map({ users = dummyUsers }: MapProps) {
+export default function Map() {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
+  const markerIconRef = useRef<any>(null)
+  const amapRef = useRef<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [users, setUsers] = useState<User[]>([])
+  const [usersError, setUsersError] = useState<string | null>(null)
+  const [usersLoading, setUsersLoading] = useState(false)
+
+  const usersEmptyMessage = useMemo(() => {
+    if (usersLoading) return '正在加载注册用户…'
+    if (usersError) return usersError
+    if (!users.length) return '暂无注册用户可显示。'
+    return null
+  }, [usersLoading, usersError, users.length])
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_AMAP_KEY
@@ -84,7 +83,8 @@ export default function Map({ users = dummyUsers }: MapProps) {
         if (!AMap) throw new Error('AMap not found on window')
         if (!containerRef.current) throw new Error('Map container not ready')
 
-          const markerIconSvg = `
+        amapRef.current = AMap
+        const markerIconSvg = `
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
             <defs>
               <linearGradient id="wing" x1="0" y1="0" x2="1" y2="1">
@@ -102,6 +102,7 @@ export default function Map({ users = dummyUsers }: MapProps) {
           size: new AMap.Size(32, 40),
           imageSize: new AMap.Size(32, 40),
         })
+        markerIconRef.current = markerIcon
 
         // 初始化地图（只做最小配置）
         const map = new AMap.Map(containerRef.current, {
@@ -111,27 +112,6 @@ export default function Map({ users = dummyUsers }: MapProps) {
           mapStyle: 'amap://styles/whitesmoke',
         })
         mapRef.current = map
-
-        // 打点
-        users.forEach((u) => {
-          const marker = new AMap.Marker({
-            position: [u.lng, u.lat],
-            title: `${u.name} - ${u.city}`,
-            label: { content: u.city, direction: 'right' },
-            icon: markerIcon,
-            offset: new AMap.Pixel(-16, -36),
-          })
-
-          marker.on('click', () => {
-            const infoWindow = new AMap.InfoWindow({
-              content: `<div style="padding:10px;"><strong>${u.name}</strong><br/>城市: ${u.city}</div>`,
-            })
-            infoWindow.open(map, [u.lng, u.lat])
-          })
-
-          map.add(marker)
-          markersRef.current.push(marker)
-        })
 
         setLoaded(true)
         setError(null)
@@ -158,13 +138,118 @@ export default function Map({ users = dummyUsers }: MapProps) {
         mapRef.current = null
       }
     }
+  }, [])
+
+  useEffect(() => {
+    if (!loaded || !amapRef.current) return
+
+    let cancelled = false
+
+    const loadUsers = async () => {
+      setUsersLoading(true)
+      setUsersError(null)
+      try {
+        const supabase = createClient()
+        const { data, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, username, display_name, country, province, city')
+          .not('city', 'is', null)
+
+        if (profilesError) {
+          throw profilesError
+        }
+
+        const AMap = amapRef.current
+        const geocoder = new AMap.Geocoder({ city: '全国' })
+        const userLocations = await Promise.all(
+          (data ?? []).map(async (profile) => {
+            const name = profile.display_name || profile.username || '匿名用户'
+            const addressParts = [profile.country, profile.province, profile.city].filter(Boolean)
+            const address = addressParts.join('')
+            if (!address) return null
+
+            const location = await new Promise<{ lng: number; lat: number } | null>((resolve) => {
+              geocoder.getLocation(address, (status: string, result: any) => {
+                if (status === 'complete' && result.geocodes?.length) {
+                  const { location } = result.geocodes[0]
+                  resolve({ lng: location.lng, lat: location.lat })
+                  return
+                }
+                resolve(null)
+              })
+            })
+
+            if (!location) return null
+
+            return {
+              id: profile.id,
+              name,
+              city: profile.city ?? '',
+              lat: location.lat,
+              lng: location.lng,
+            }
+          })
+        )
+
+        if (!cancelled) {
+          setUsers(userLocations.filter((u): u is User => Boolean(u)))
+        }
+      } catch (e: any) {
+        if (!cancelled) {
+          setUsersError(`加载用户失败：${String(e?.message ?? e)}`)
+        }
+      } finally {
+        if (!cancelled) {
+          setUsersLoading(false)
+        }
+      }
+    }
+
+    loadUsers()
+
+    return () => {
+      cancelled = true
+    }
+  }, [loaded])
+
+  useEffect(() => {
+    const map = mapRef.current
+    const AMap = amapRef.current
+    const markerIcon = markerIconRef.current
+
+    if (!map || !AMap || !markerIcon) return
+
+    if (markersRef.current.length) {
+      markersRef.current.forEach((marker) => map.remove(marker))
+      markersRef.current = []
+    }
+
+    users.forEach((u) => {
+      const marker = new AMap.Marker({
+        position: [u.lng, u.lat],
+        title: `${u.name} - ${u.city}`,
+        label: { content: u.city, direction: 'right' },
+        icon: markerIcon,
+        offset: new AMap.Pixel(-16, -36),
+      })
+
+      marker.on('click', () => {
+        const infoWindow = new AMap.InfoWindow({
+          content: `<div style="padding:10px;"><strong>${u.name}</strong><br/>城市: ${u.city}</div>`,
+        })
+        infoWindow.open(map, [u.lng, u.lat])
+      })
+
+      map.add(marker)
+      markersRef.current.push(marker)
+    })  
   }, [users])
 
   return (
     <div className="relative w-full h-[520px] rounded-b-[32px] border-b border-[#f2e2c9] shadow-[0_20px_60px_-50px_rgba(164,133,94,0.6)] overflow-hidden">
       <div ref={containerRef} className="w-full h-full" />
 
-      {!loaded && (
+      {(!loaded || error) && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#fdf8f1]">
           <div className="text-center">
             <p className="text-lg text-[#6e8fb1]">加载地图中…</p>
@@ -172,6 +257,12 @@ export default function Map({ users = dummyUsers }: MapProps) {
               <p className="text-sm text-[#c97c63] mt-2">{error}</p>
             )}
           </div>
+        </div>
+      )}
+
+{loaded && !error && usersEmptyMessage && (
+        <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-sm text-[#6e8fb1] shadow-md ring-1 ring-[#e7d4b5]">
+          {usersEmptyMessage}
         </div>
       )}
     </div>
