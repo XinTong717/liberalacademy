@@ -219,6 +219,8 @@ export default function LoginPage() {
               </label>
               <Input
                 id="username"
+                name="username"
+                autoComplete="username"
                 type="text"
                 placeholder="请输入用户名"
                 value={username}
@@ -233,6 +235,8 @@ export default function LoginPage() {
               </label>
               <Input
                 id="password"
+                name="password"
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 type="password"
                 placeholder="请输入密码"
                 value={password}
@@ -249,6 +253,8 @@ export default function LoginPage() {
                   </label>
                   <Input
                     id="confirmPassword"
+                    name="confirmPassword"
+                    autoComplete="new-password"
                     type="password"
                     placeholder="请再次输入密码"
                     value={confirmPassword}
@@ -261,7 +267,13 @@ export default function LoginPage() {
                     所在地
                   </label>
                   <div className="grid gap-2 sm:grid-cols-3">
+                    <label htmlFor="country" className="sr-only">
+                      国家/地区
+                    </label>
                     <select
+                      id="country"
+                      name="country"
+                      autoComplete="country-name"
                       className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
@@ -271,7 +283,13 @@ export default function LoginPage() {
                         <option key={option} value={option}>{option}</option>
                       ))}
                     </select>
+                    <label htmlFor="province" className="sr-only">
+                      省/州
+                    </label>
                     <select
+                      id="province"
+                      name="province"
+                      autoComplete="address-level1"
                       className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                       value={province}
                       onChange={(e) => setProvince(e.target.value)}
@@ -281,7 +299,13 @@ export default function LoginPage() {
                         <option key={option} value={option}>{option}</option>
                       ))}
                     </select>
+                    <label htmlFor="city" className="sr-only">
+                      城市
+                    </label>
                     <select
+                      id="city"
+                      name="city"
+                      autoComplete="address-level2"
                       className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}

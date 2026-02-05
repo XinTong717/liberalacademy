@@ -39,6 +39,34 @@ function loadAMap(key: string): Promise<any> {
   })
 }
 
+function loadGeocoder(AMap: any): Promise<any> {
+  return new Promise((resolve, reject) => {
+    if (!AMap) {
+      reject(new Error('AMap not ready'))
+      return
+    }
+    if (AMap.Geocoder) {
+      resolve(new AMap.Geocoder({ city: '全国' }))
+      return
+    }
+    if (typeof AMap.plugin !== 'function') {
+      reject(new Error('AMap plugin API unavailable'))
+      return
+    }
+    AMap.plugin('AMap.Geocoder', () => {
+      try {
+        if (!AMap.Geocoder) {
+          reject(new Error('AMap Geocoder plugin load failed'))
+          return
+        }
+        resolve(new AMap.Geocoder({ city: '全国' }))
+      } catch (error) {
+        reject(error)
+      }
+    })
+  })
+}
+
 export default function Map() {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
@@ -160,7 +188,7 @@ export default function Map() {
         }
 
         const AMap = amapRef.current
-        const geocoder = new AMap.Geocoder({ city: '全国' })
+        const geocoder = await loadGeocoder(AMap)
         const userLocations = await Promise.all(
           (data ?? []).map(async (profile) => {
             const name = profile.display_name || profile.username || '匿名用户'
