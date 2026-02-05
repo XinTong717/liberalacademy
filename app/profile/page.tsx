@@ -37,6 +37,7 @@ export default function ProfilePage() {
   const [country, setCountry] = useState('')
   const [province, setProvince] = useState('')
   const [city, setCity] = useState('')
+  const [username, setUsername] = useState('')
   const [nickname, setNickname] = useState('')
   const [gender, setGender] = useState<Gender | ''>('')
   const [age, setAge] = useState('')
@@ -106,7 +107,7 @@ export default function ProfilePage() {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('country, province, city, nickname, gender, age, bio')
+        .select('username, country, province, city, nickname, gender, age, bio')
         .eq('id', currentUser.id)
         .maybeSingle()
 
@@ -115,6 +116,7 @@ export default function ProfilePage() {
         return
       }
 
+      setUsername(profile?.username ?? currentUser.email?.split('@')[0] ?? '')
       setCountry(profile?.country ?? '')
       setProvince(profile?.province ?? '')
       setCity(profile?.city ?? '')
@@ -202,12 +204,12 @@ export default function ProfilePage() {
         <CardContent>
           <div className="rounded-md bg-gray-50 p-3">
             <p className="text-sm text-gray-600">
-              <strong>用户:</strong> {user.email || '未设置'}
+              <strong>用户名:</strong> {username || '未设置'}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
                 <label htmlFor="country" className="mb-2 block text-sm font-medium">
                   国家
