@@ -207,8 +207,9 @@ export default function Map({ isLoggedIn }: MapProps) {
         const userLocations = await Promise.all(
           (data ?? []).map(async (profile) => {
             const name = profile.display_name || profile.username || '匿名用户'
-            const address = [profile.country, profile.province, profile.city].filter(Boolean).join('')
+            const address = [profile.country, profile.province, profile.city].filter(Boolean).join(' ')
             if (!address) return null
+            const cityLimit = profile.city || profile.province || '全国'
 
             const location = await new Promise<{ lng: number; lat: number } | null>((resolve) => {
               geocoder.getLocation(address, (status: string, result: any) => {
@@ -218,7 +219,7 @@ export default function Map({ isLoggedIn }: MapProps) {
                   return
                 }
                 resolve(null)
-              })
+              }, cityLimit)
             })
 
             if (!location) return null
