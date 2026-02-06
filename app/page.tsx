@@ -8,8 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 
 
 export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [authReady, setAuthReady] = useState(false)
+  const [authState, setAuthState] = useState<'loading' | 'in' | 'out'>('loading')
 
   useEffect(() => {
     const supabase = createClient()
@@ -17,16 +16,14 @@ export default function Home() {
 
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return
-      setIsAuthenticated(Boolean(data.session?.user))
-      setAuthReady(true)
+      setAuthState(data.session?.user ? 'in' : 'out')
     })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return
-      setIsAuthenticated(Boolean(session?.user))
-      setAuthReady(true)
+      setAuthState(session?.user ? 'in' : 'out')
     })
 
     return () => {
@@ -35,9 +32,11 @@ export default function Home() {
     }
   }, [])
 
+  const isAuthenticated = authState === 'in'
+  
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#fbf7ee]">
-      <Map />
+      <Map isLoggedIn={isAuthenticated} />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#fbf7ee]/80 via-[#fdfbf5]/30 to-transparent" />
       <div className="absolute inset-x-4 top-4 z-10 flex flex-col gap-3 sm:inset-x-6 sm:flex-row sm:items-start sm:justify-between">
         {/* Title overlay */}
@@ -58,7 +57,7 @@ export default function Home() {
 
         {/* Navigation overlay */}
         <div className="flex flex-wrap gap-2 sm:justify-end sm:gap-3">
-          {!authReady ? null : isAuthenticated ? (
+          {isAuthenticated ? (
             <Link
               href="/profile"
               className="rounded-full bg-white/95 px-5 py-2.5 text-sm font-semibold text-[#4a709a] shadow-md ring-1 ring-[#e7d4b5] transition-colors hover:bg-white"

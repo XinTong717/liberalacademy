@@ -12,6 +12,10 @@ type User = {
   lng: number
 }
 
+type MapProps = {
+  isLoggedIn: boolean
+}
+
 declare global {
   interface Window {
     AMap?: any
@@ -68,7 +72,7 @@ function loadGeocoder(AMap: any): Promise<any> {
   })
 }
 
-export default function Map() {
+export default function Map({ isLoggedIn }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
@@ -79,8 +83,6 @@ export default function Map() {
   const [users, setUsers] = useState<User[]>([])
   const [usersError, setUsersError] = useState<string | null>(null)
   const [usersLoading, setUsersLoading] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
-  const [authReady, setAuthReady] = useState(false)
   const [showLoginHint, setShowLoginHint] = useState(false)
 
   const usersEmptyMessage = useMemo(() => {
@@ -89,30 +91,6 @@ export default function Map() {
     if (!users.length) return '暂无注册用户可显示。'
     return null
   }, [usersLoading, usersError, users.length])
-
-  useEffect(() => {
-    const supabase = createClient()
-    let active = true
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return
-      setIsAuthenticated(Boolean(data.session?.user))
-      setAuthReady(true)
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return
-      setIsAuthenticated(Boolean(session?.user))
-      setAuthReady(true)
-    })
-
-    return () => {
-      active = false
-      subscription.unsubscribe()
-    }
-  }, [])
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_AMAP_KEY
@@ -127,9 +105,7 @@ export default function Map() {
       return
     }
 
-    // ✅ 官方要求：必须在加载 JSAPI 脚本前设置，否则无效
-    // window._AMapSecurityConfig = { securityJsCode: '...' }
-    window._AMapSecurityConfig = { securityJsCode } // :contentReference[oaicite:1]{index=1}
+    window._AMapSecurityConfig = { securityJsCode }
 
     let cancelled = false
 
@@ -153,21 +129,18 @@ export default function Map() {
             <path d="M8 12.5c3.8-5 8.5-5 16 0" fill="none" stroke="url(#wing)" stroke-width="2" stroke-linecap="round"/>
           </svg>
         `
-        const markerIcon = new AMap.Icon({
+        markerIconRef.current = new AMap.Icon({
           image: `data:image/svg+xml;utf8,${encodeURIComponent(markerIconSvg)}`,
           size: new AMap.Size(32, 40),
           imageSize: new AMap.Size(32, 40),
         })
-        markerIconRef.current = markerIcon
 
-        // 初始化地图（只做最小配置）
-        const map = new AMap.Map(containerRef.current, {
+        mapRef.current = new AMap.Map(containerRef.current, {
           zoom: 5,
           center: [116.397428, 39.90923],
           viewMode: '3D',
           mapStyle: 'amap://styles/whitesmoke',
         })
-        mapRef.current = map
 
         setLoaded(true)
         setError(null)
@@ -179,15 +152,12 @@ export default function Map() {
     return () => {
       cancelled = true
 
-      // 清理 marker
       if (mapRef.current && markersRef.current.length) {
         markersRef.current.forEach((m) => mapRef.current.remove(m))
       }
       markersRef.current = []
 
-      // 清理 map
       if (mapRef.current) {
-        // AMap.Map 有 destroy 方法
         try {
           mapRef.current.destroy()
         } catch {}
@@ -195,6 +165,25 @@ export default function Map() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    map.setStatus({
+      dragEnable: isLoggedIn,
+      zoomEnable: isLoggedIn,
+      doubleClickZoom: isLoggedIn,
+      keyboardEnable: isLoggedIn,
+      scrollWheel: isLoggedIn,
+      jogEnable: isLoggedIn,
+      touchZoom: isLoggedIn,
+    })
+
+    if (isLoggedIn) {
+      setShowLoginHint(false)
+    }
+  }, [isLoggedIn])
 
   useEffect(() => {
     if (!loaded || !amapRef.current) return
@@ -211,17 +200,14 @@ export default function Map() {
           .select('id, username, display_name, country, province, city')
           .not('city', 'is', null)
 
-        if (profilesError) {
-          throw profilesError
-        }
+        if (profilesError) throw profilesError
 
         const AMap = amapRef.current
         const geocoder = await loadGeocoder(AMap)
         const userLocations = await Promise.all(
           (data ?? []).map(async (profile) => {
             const name = profile.display_name || profile.username || '匿名用户'
-            const addressParts = [profile.country, profile.province, profile.city].filter(Boolean)
-            const address = addressParts.join('')
+            const address = [profile.country, profile.province, profile.city].filter(Boolean).join('')
             if (!address) return null
 
             const location = await new Promise<{ lng: number; lat: number } | null>((resolve) => {
@@ -273,7 +259,7 @@ export default function Map() {
     const AMap = amapRef.current
     const markerIcon = markerIconRef.current
 
-    if (!map || !AMap || !markerIcon || !authReady) return
+    if (!map || !AMap || !markerIcon) return
 
     if (markersRef.current.length) {
       markersRef.current.forEach((marker) => map.remove(marker))
@@ -281,25 +267,24 @@ export default function Map() {
     }
 
     users.forEach((u) => {
-      const markerLabel = isAuthenticated ? `${u.city} · ${u.name}` : '已注册用户'
       const marker = new AMap.Marker({
         position: [u.lng, u.lat],
-        title: isAuthenticated ? `${u.name} - ${u.city}` : '登录后查看用户信息',
+        title: isLoggedIn ? `${u.name} - ${u.city}` : '登录后查看用户信息',
         label: {
-          content: markerLabel,
+          content: isLoggedIn ? `${u.city} · ${u.name}` : '已注册用户',
           direction: 'right',
           offset: new AMap.Pixel(10, -4),
           style: {
-            color: isAuthenticated ? '#1a3553' : '#244663',
-            border: isAuthenticated ? '1px solid #ddbf92' : '1px solid #c89d68',
-            background: isAuthenticated ? 'rgba(255, 252, 245, 0.96)' : 'rgba(255, 251, 240, 0.98)',
+            color: isLoggedIn ? '#1a3553' : '#244663',
+            border: isLoggedIn ? '1px solid #ddbf92' : '1px solid #c89d68',
+            background: isLoggedIn ? 'rgba(255, 252, 245, 0.96)' : 'rgba(255, 251, 240, 0.98)',
             borderRadius: '999px',
             fontSize: '12px',
             padding: '4px 10px',
-            fontWeight: isAuthenticated ? '700' : '700',
+            fontWeight: '700',
             letterSpacing: '0.2px',
-            textShadow: isAuthenticated ? 'none' : '0 1px 0 rgba(255, 255, 255, 0.65)',
-            boxShadow: isAuthenticated ? '0 6px 16px rgba(48, 72, 99, 0.18)' : '0 7px 18px rgba(36, 70, 99, 0.22)',
+            textShadow: isLoggedIn ? 'none' : '0 1px 0 rgba(255, 255, 255, 0.65)',
+            boxShadow: isLoggedIn ? '0 6px 16px rgba(48, 72, 99, 0.18)' : '0 7px 18px rgba(36, 70, 99, 0.22)',
           },
         },
         icon: markerIcon,
@@ -307,13 +292,13 @@ export default function Map() {
       })
 
       marker.on('click', () => {
-        if (!isAuthenticated) {
+        if (!isLoggedIn) {
           setShowLoginHint(true)
           return
         }
 
         const infoWindow = new AMap.InfoWindow({
-          content: `<div style="padding:10px 12px;color:#1a3553;line-height:1.6;font-size:13px;"><strong style=\"font-size:14px;color:#14304d;\">${u.name}</strong><br/>所在地：${u.city}</div>`,
+          content: `<div style="padding:10px 12px;color:#1a3553;line-height:1.6;font-size:13px;"><strong style="font-size:14px;color:#14304d;">${u.name}</strong><br/>所在地：${u.city}</div>`,
         })
         infoWindow.open(map, [u.lng, u.lat])
       })
@@ -321,68 +306,39 @@ export default function Map() {
       map.add(marker)
       markersRef.current.push(marker)
     })
-
-    const onZoomEnd = () => {
-      if (isAuthenticated) return
-      const zoom = map.getZoom()
-      if (zoom > 5.6) {
-        map.setZoom(5.6)
-        setShowLoginHint(true)
-      }
-    }
-
-    map.on('zoomend', onZoomEnd)
-
-    return () => {
-      map.off('zoomend', onZoomEnd)
-    }
-  }, [users, isAuthenticated, authReady])
+  }, [users, isLoggedIn])
 
   return (
     <div className="relative h-screen w-full overflow-hidden border-b border-[#f2e2c9] shadow-[0_20px_60px_-50px_rgba(164,133,94,0.6)]">
-      <div ref={containerRef} className="w-full h-full" />
+      <div ref={containerRef} className="h-full w-full" />
 
-      {authReady && !isAuthenticated && (
-        <div className="pointer-events-none absolute inset-0 bg-[#fdf8ef]/15 backdrop-blur-[1.8px]" />
+      {!isLoggedIn && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#fdf8ef]/35 backdrop-blur-[3.5px]">
+          <Link
+            href="/login"
+            className="rounded-full bg-[#2f6696] px-10 py-4 text-lg font-semibold text-white shadow-xl transition hover:bg-[#285884]"
+          >
+            注册 / 登录后查看完整地图
+          </Link>
+        </div>
       )}
 
       {(!loaded || error) && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#fdf8f1]">
           <div className="text-center">
             <p className="text-lg text-[#6e8fb1]">加载地图中…</p>
-            {error && (
-              <p className="text-sm text-[#c97c63] mt-2">{error}</p>
-            )}
+            {error && <p className="mt-2 text-sm text-[#c97c63]">{error}</p>}
           </div>
         </div>
       )}
 
       {loaded && !error && usersEmptyMessage && !showLoginHint && (
-          <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-sm text-[#46617a] shadow-md ring-1 ring-[#e7d4b5]">
+        <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-sm text-[#46617a] shadow-md ring-1 ring-[#e7d4b5]">
           {usersEmptyMessage}
         </div>
       )}
 
-      {authReady && !isAuthenticated && !showLoginHint && (
-        <div className="absolute inset-x-4 bottom-6 z-20 sm:left-6 sm:right-auto sm:max-w-md">
-          <div className="pointer-events-auto rounded-2xl border border-[#e5cfad] bg-white/93 px-4 py-3 text-[#32567a] shadow-xl backdrop-blur">
-            <p className="text-sm font-semibold text-[#294d73]">登录后可查看地图上的用户名与所在地</p>
-            <p className="mt-1 text-xs text-[#547293]">
-              目前仅展示模糊分布，点击标记或放大地图将提示登录。
-            </p>
-            <div className="mt-3">
-              <Link
-                href="/login"
-                className="inline-flex rounded-full bg-[#2f6696] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#285884]"
-              >
-                先注册 / 登录
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showLoginHint && !isAuthenticated && (
+      {showLoginHint && !isLoggedIn && (
         <div className="absolute right-4 top-24 z-30 rounded-xl border border-[#e1c59f] bg-[#fff9f1]/95 px-3 py-2 text-xs font-medium text-[#8f5c2f] shadow-lg">
           请先登录后查看详细用户信息
         </div>
