@@ -319,7 +319,7 @@ export default function Map({ isLoggedIn }: MapProps) {
             href="/login"
             className="rounded-full bg-[#2f6696] px-10 py-4 text-lg font-semibold text-white shadow-xl transition hover:bg-[#285884]"
           >
-            注册 / 登录后查看其他用户信息
+            注册/登录后查看其他用户信息
           </Link>
         </div>
       )}
