@@ -314,7 +314,7 @@ export default function Map({ isLoggedIn }: MapProps) {
       <div ref={containerRef} className="h-full w-full" />
 
       {!isLoggedIn && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#fdf8ef]/35 backdrop-blur-[1.5px]">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#fdf8ef]/15 backdrop-blur-[0.5px]">
           <Link
             href="/login"
             className="rounded-full bg-[#2f6696] px-10 py-4 text-lg font-semibold text-white shadow-xl transition hover:bg-[#285884]"
