@@ -134,6 +134,15 @@ export default function LoginPage() {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username,
+            display_name: username,
+            country,
+            province,
+            city,
+          },
+        },
       })
 
       if (signUpError) {
@@ -155,10 +164,36 @@ export default function LoginPage() {
         province,
         city,
       }
-      console.info('Upserting profile with location data', profilePayload)
+
+      let sessionUserId = signUpData.session?.user?.id
+      if (!sessionUserId) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+
+        if (signInError) {
+          setMessage(`注册成功，但自动保存个人信息失败，请登录后前往“完善个人信息”保存地址。(${signInError.message})`)
+          setMode('login')
+          setPassword('')
+          setConfirmPassword('')
+          return
+        }
+
+        sessionUserId = signInData.user?.id
+      }
+
+      if (!sessionUserId) {
+        setMessage('注册成功，但未获取到登录会话，请登录后前往“完善个人信息”完成保存。')
+        setMode('login')
+        setPassword('')
+        setConfirmPassword('')
+        return
+      }
+      
       const { error: insertError } = await supabase
         .from('profiles')
-        .upsert(profilePayload)
+        .upsert(profilePayload, { onConflict: 'id' })
 
       if (insertError) {
         setMessage(`错误: ${insertError.message}`)
@@ -169,8 +204,9 @@ export default function LoginPage() {
       setMode('login')
       setPassword('')
       setConfirmPassword('')
-    } catch (error: any) {
-      setMessage(`错误: ${error.message || '发生未知错误'}`)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '发生未知错误'
+      setMessage(`错误: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
