@@ -224,16 +224,16 @@ export default function CommunitiesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-12">
-      <div className="mx-auto max-w-6xl">
+    <div className="min-h-screen bg-[#f8f4ec] px-4 py-12">
+      <div className="mx-auto max-w-6xl text-[#334e68]">
         <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">社群列表</h1>
-          <p className="text-gray-600">点击卡片查看群主和微信号，并可一键复制微信号。</p>
+          <h1 className="mb-2 text-3xl font-bold text-[#3f638c]">社群列表</h1>
+          <p className="text-[#5f7591]">点击卡片查看群主和微信号，并可一键复制微信号。</p>
         </div>
 
         <div className="mb-6">
           <Link href="/">
-            <Button variant="outline">返回首页</Button>
+            <Button variant="outline" className="border-[#d8c6ab] bg-[#fffdf9] text-[#4f6883] hover:bg-[#f6efe4]">返回首页</Button>
           </Link>
         </div>
 
@@ -242,7 +242,7 @@ export default function CommunitiesPage() {
 
           return (
             <section key={section} className="mb-10">
-              <h2 className="mb-4 text-2xl font-semibold">{section}</h2>
+              <h2 className="mb-4 text-2xl font-semibold text-[#3f638c]">{section}</h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {sectionCommunities.map((community) => {
                   const isOpen = activeCardId === community.id
@@ -250,18 +250,18 @@ export default function CommunitiesPage() {
                   return (
                     <Card
                       key={community.id}
-                      className="cursor-pointer transition hover:shadow-md"
+                      className="cursor-pointer border-[#ead8bc] bg-[#fffdf9] transition hover:-translate-y-0.5 hover:shadow-lg"
                       onClick={() => setActiveCardId(isOpen ? null : community.id)}
                     >
                       <CardHeader>
-                        <CardTitle className="text-lg">{community.name}</CardTitle>
-                        <CardDescription>点击查看入群信息</CardDescription>
+                        <CardTitle className="text-lg text-[#3f638c]">{community.name}</CardTitle>
+                        <CardDescription className="text-[#6f8299]">点击查看入群信息</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm text-gray-700">{community.summary}</p>
+                        <p className="text-sm leading-6 text-[#4f6883]">{community.summary}</p>
 
                         {isOpen ? (
-                          <div className="mt-4 rounded-md border border-blue-100 bg-blue-50 p-3 text-sm">
+                          <div className="mt-4 rounded-md border border-[#c9d9ea] bg-[#eef5fb] p-3 text-sm text-[#36597a]">                            
                             <p>
                               <span className="font-medium">群主：</span>
                               {community.owner}
@@ -270,7 +270,7 @@ export default function CommunitiesPage() {
                               <span className="font-medium">微信号：</span>
                               <button
                                 type="button"
-                                className="rounded px-1 text-blue-700 underline hover:text-blue-900"
+                                className="rounded px-1 text-[#3f638c] underline hover:text-[#2f4b66]"
                                 onClick={(event) => {
                                   event.stopPropagation()
                                   void handleCopy(community)
@@ -281,7 +281,7 @@ export default function CommunitiesPage() {
                             </p>
                             <Button
                               size="sm"
-                              className="mt-3"
+                              className="mt-3 bg-[#6e8fb1] text-white hover:bg-[#5d7fa2]"
                               onClick={(event) => {
                                 event.stopPropagation()
                                 void handleCopy(community)

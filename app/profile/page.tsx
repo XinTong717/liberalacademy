@@ -188,37 +188,37 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>加载中...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#f8f4ec]">
+        <p className="text-[#5f7591]">加载中...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-      <Card className="w-full max-w-xl">
+    <div className="flex min-h-screen items-center justify-center bg-[#f8f4ec] px-4 py-12">
+      <Card className="w-full max-w-xl border-[#ead8bc] bg-[#fffdf9] text-[#334e68] shadow-lg">
         <CardHeader>
-          <CardTitle>完善个人信息</CardTitle>
-          <CardDescription>补充昵称、性别、年龄、自我介绍，并可更新地图展示使用的地址</CardDescription>
+          <CardTitle className="text-[#3f638c]">完善个人信息</CardTitle>
+          <CardDescription className="text-[#5f7591]">补充昵称、性别、年龄、自我介绍，并可更新地图展示使用的地址</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md bg-gray-50 p-3">
-            <p className="text-sm text-gray-600">
+          <div className="rounded-md border border-[#ecdcc2] bg-[#f8f3e8] p-3">
+            <p className="text-sm text-[#5f7591]">
               <strong>用户名:</strong> {username || '未设置'}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
-                <label htmlFor="country" className="mb-2 block text-sm font-medium">
+                <label htmlFor="country" className="mb-2 block text-sm font-medium text-[#3f638c]">
                   国家
                 </label>
                 <select
                   id="country"
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="h-10 w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"
                   required
                 >
                   {Object.keys(locationOptions).map((name) => (
@@ -230,14 +230,14 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label htmlFor="province" className="mb-2 block text-sm font-medium">
+              <label htmlFor="province" className="mb-2 block text-sm font-medium text-[#3f638c]">
                   省/州
                 </label>
                 <select
                   id="province"
                   value={province}
                   onChange={(e) => setProvince(e.target.value)}
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="h-10 w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"
                   required
                 >
                   {provinces.map((name) => (
@@ -249,14 +249,14 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label htmlFor="city" className="mb-2 block text-sm font-medium">
+              <label htmlFor="city" className="mb-2 block text-sm font-medium text-[#3f638c]">
                   城市
                 </label>
                 <select
                   id="city"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="h-10 w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"
                   required
                 >
                   {cities.map((name) => (
@@ -269,7 +269,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label htmlFor="nickname" className="mb-2 block text-sm font-medium">
+            <label htmlFor="nickname" className="mb-2 block text-sm font-medium text-[#3f638c]">
                 昵称
               </label>
               <Input
@@ -282,10 +282,10 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <p className="mb-2 block text-sm font-medium">性别</p>
+              <p className="mb-2 block text-sm font-medium text-[#3f638c]">性别</p>
               <div className="flex gap-4">
                 {(['男', '女', '其他'] as Gender[]).map((option) => (
-                  <label key={option} className="flex items-center gap-2 text-sm text-gray-700">
+                  <label key={option} className="flex items-center gap-2 text-sm text-[#4f6883]">
                     <input
                       type="radio"
                       name="gender"
@@ -300,7 +300,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label htmlFor="age" className="mb-2 block text-sm font-medium">
+              <label htmlFor="age" className="mb-2 block text-sm font-medium text-[#3f638c]">
                 年龄
               </label>
               <Input
@@ -315,7 +315,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label htmlFor="bio" className="mb-2 block text-sm font-medium">
+              <label htmlFor="bio" className="mb-2 block text-sm font-medium text-[#3f638c]">
                 自我介绍
               </label>
               <textarea
@@ -324,7 +324,7 @@ export default function ProfilePage() {
                 placeholder="介绍一下你自己...可以是自休学状态、性格爱好等，任何你觉得会帮助你找到合适的同伴的信息~"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                className="w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 py-2 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"
               />
             </div>
 
@@ -338,17 +338,17 @@ export default function ProfilePage() {
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-[#6e8fb1] text-white hover:bg-[#5d7fa2]" disabled={isLoading}>
               {isLoading ? '保存中...' : '保存'}
             </Button>
           </form>
 
           <div className="mt-6 space-y-2">
-            <Button variant="outline" onClick={handleLogout} className="w-full">
+            <Button variant="outline" onClick={handleLogout} className="w-full border-[#d8c6ab] text-[#4f6883] hover:bg-[#f6efe4]">
               退出登录
             </Button>
             <div className="text-center">
-              <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
+              <Link href="/" className="text-sm text-[#6f8299] hover:text-[#3f638c]">
                 返回首页
               </Link>
             </div>
