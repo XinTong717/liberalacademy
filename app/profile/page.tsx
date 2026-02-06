@@ -8,30 +8,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
+import { locationOptions } from '@/lib/location-options'
 
 type Gender = '男' | '女' | '其他'
-
-const locationOptions = {
-  中国: {
-    北京: ['北京'],
-    上海: ['上海'],
-    广东: ['广州', '深圳'],
-    四川: ['成都', '绵阳'],
-    浙江: ['杭州', '宁波'],
-  },
-  美国: {
-    加利福尼亚: ['旧金山', '洛杉矶'],
-    纽约: ['纽约'],
-    华盛顿: ['西雅图'],
-  },
-  日本: {
-    东京都: ['东京'],
-    大阪府: ['大阪'],
-  },
-  新加坡: {
-    中央区: ['新加坡'],
-  },
-}
 
 export default function ProfilePage() {
   const [country, setCountry] = useState('')
@@ -199,7 +178,7 @@ export default function ProfilePage() {
       <Card className="w-full max-w-xl border-[#ead8bc] bg-[#fffdf9] text-[#334e68] shadow-lg">
         <CardHeader>
           <CardTitle className="text-[#3f638c]">完善个人信息</CardTitle>
-          <CardDescription className="text-[#5f7591]">补充昵称、性别、年龄、自我介绍，并可更新地图展示使用的地址</CardDescription>
+          <CardDescription className="text-[#5f7591]">填写以下信息，更快找到聊得来的伙伴~</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border border-[#ecdcc2] bg-[#f8f3e8] p-3">
@@ -275,7 +254,7 @@ export default function ProfilePage() {
               <Input
                 id="nickname"
                 type="text"
-                placeholder="请输入昵称"
+                placeholder="请输入你希望向他人展示的名字"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
               />

@@ -7,28 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { locationOptions } from '@/lib/location-options'
 
-const locationOptions = {
-  中国: {
-    北京: ['北京'],
-    上海: ['上海'],
-    广东: ['广州', '深圳'],
-    四川: ['成都', '绵阳'],
-    浙江: ['杭州', '宁波'],
-  },
-  美国: {
-    加利福尼亚: ['旧金山', '洛杉矶'],
-    纽约: ['纽约'],
-    华盛顿: ['西雅图'],
-  },
-  日本: {
-    东京都: ['东京'],
-    大阪府: ['大阪'],
-  },
-  新加坡: {
-    中央区: ['新加坡'],
-  },
-}
+const USERNAME_RULE = /^[a-zA-Z0-9._-]{3,30}$/
+const PASSWORD_MIN_LENGTH = 6
 
 
 export default function LoginPage() {
@@ -91,6 +73,16 @@ export default function LoginPage() {
 
     try {
       const supabase = createClient()
+
+      if (!USERNAME_RULE.test(username)) {
+        setMessage('用户名需为 3-30 位，仅支持英文字母、数字、点(.)、下划线(_)和短横线(-)。')
+        return
+      }
+
+      if (password.length < PASSWORD_MIN_LENGTH) {
+        setMessage(`密码至少需要 ${PASSWORD_MIN_LENGTH} 位。`)
+        return
+      }
 
       if (mode === 'login') {
         const email = `${username}@users.liberalacademy.site`
@@ -261,8 +253,17 @@ export default function LoginPage() {
                 placeholder="请输入用户名"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                minLength={3}
+                maxLength={30}
+                pattern="[a-zA-Z0-9._-]{3,30}"
+                title="用户名需为 3-30 位，仅支持英文字母、数字、点(.)、下划线(_)和短横线(-)。"
                 required
               />
+              {mode === 'register' && (
+                <p className="mt-2 text-xs text-[#6f8299]">
+                  用户名请使用 3-30 位英文字母、数字、点(.)、下划线(_)或短横线(-)，注册后不可更改。登录后可在个人信息页面添加修改对外展示昵称。
+                </p>
+              )}
             </div>
 
             <div>
@@ -277,8 +278,15 @@ export default function LoginPage() {
                 placeholder="请输入密码"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                minLength={PASSWORD_MIN_LENGTH}
+                title={`密码至少 ${PASSWORD_MIN_LENGTH} 位。`}
                 required
               />
+              {mode === 'register' && (
+                <p className="mt-2 text-xs text-[#6f8299]">
+                  密码至少 {PASSWORD_MIN_LENGTH} 位，建议包含大小写字母、数字和符号以提升安全性。
+                </p>
+              )}
             </div>
 
             {mode === 'register' && (
@@ -295,6 +303,7 @@ export default function LoginPage() {
                     placeholder="请再次输入密码"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    minLength={PASSWORD_MIN_LENGTH}
                     required
                   />
                 </div>
