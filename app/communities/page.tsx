@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
+
 type Community = {
   id: number
   section: '🌟 近期活跃' | '🌾 长期开放'
@@ -266,7 +267,7 @@ export default function CommunitiesPage() {
 
         {showCreateForm ? (
           <div className="mb-8 rounded-lg border border-[#c9d9ea] bg-[#eef5fb] p-4 text-[#36597a]">
-            <p className="mb-4 text-sm">本功能正在内测中，请填写想要创建的群名和您的微信号。</p>
+            <p className="mb-4 text-sm">本功能正在内测中，请填写想要创建的群名和简介。</p>
             <div className="grid gap-3 md:grid-cols-2">
               <label className="text-sm">
                 <span className="mb-1 block">群名</span>
@@ -278,11 +279,11 @@ export default function CommunitiesPage() {
                 />
               </label>
               <label className="text-sm">
-                <span className="mb-1 block">微信号</span>
+                <span className="mb-1 block">简介</span>
                 <input
                   value={wechatContact}
                   onChange={(event) => setWechatContact(event.target.value)}
-                  placeholder="请输入您的微信号"
+                  placeholder="请输入社群简介"
                   className="w-full rounded-md border border-[#b5c8db] bg-white px-3 py-2 text-sm text-[#36597a] outline-none ring-[#7ea1c4] focus:ring-2"
                 />
               </label>

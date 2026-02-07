@@ -321,7 +321,7 @@ export default function ProfilePage() {
               <Input
                 id="wechat"
                 type="text"
-                placeholder="例：wxid_123（加我时请备注来自自休学社区）"
+                placeholder="例：wxid_123（加我时请备注来自自由学社）"
                 value={wechat}
                 onChange={(e) => setWechat(e.target.value)}
               />
@@ -336,7 +336,7 @@ export default function ProfilePage() {
               />
               <label htmlFor="parentContact">注册联系人是家长</label>
             </div>
-            
+
             {message && (
               <div
               className={`rounded-md p-3 text-sm ${
