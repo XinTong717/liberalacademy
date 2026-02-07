@@ -303,7 +303,7 @@ export default function Map({ isLoggedIn }: MapProps) {
           `<div><strong style="font-size:14px;color:#14304d;">${escapeHtml(u.name)}</strong></div>`,
           u.gender ? `<div>性别：${escapeHtml(String(u.gender))}</div>` : '',
           u.age ? `<div>年龄：${escapeHtml(String(u.age))}</div>` : '',
-          u.city ? `<div>所在城市：${escapeHtml(u.city)}</div>` : '',
+          u.city ? `<div>所在地：${escapeHtml(u.city)}</div>` : '',
           u.bio ? `<div>自我介绍：${escapeHtml(u.bio)}</div>` : '',
           u.wechat ? `<div>微信号：${escapeHtml(u.wechat)}</div>` : '',
           u.parentContact ? '<div>注册联系人：家长</div>' : '',
