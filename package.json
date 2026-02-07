@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "lint": "eslint",
     "build": "next build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
-    "start": "HOSTNAME=0.0.0.0 PORT=${PORT:-8080} node .next/standalone/server.js",
-    "lint": "eslint"
+    "start": "HOSTNAME=0.0.0.0 PORT=$PORT node .next/standalone/server.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

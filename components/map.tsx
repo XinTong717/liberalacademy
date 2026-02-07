@@ -253,7 +253,7 @@ export default function Map({ isLoggedIn }: MapProps) {
     return () => {
       cancelled = true
     }
-  }, [loaded])
+  }, [loaded, isLoggedIn])
 
   useEffect(() => {
     const map = mapRef.current

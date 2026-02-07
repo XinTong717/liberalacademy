@@ -138,6 +138,7 @@ export default function ProfilePage() {
         province,
         city,
         nickname: nickname.trim() || null,
+        display_name: nickname.trim() || null,
         gender: gender || null,
         age: parsedAge,
         bio: bio.trim() || null,
