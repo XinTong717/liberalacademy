@@ -10,6 +10,11 @@ type User = {
   city: string
   lat: number
   lng: number
+  gender?: string | null
+  age?: number | null
+  bio?: string | null
+  wechat?: string | null
+  parentContact?: boolean
 }
 
 type MapProps = {
@@ -197,14 +202,14 @@ export default function Map({ isLoggedIn }: MapProps) {
         const supabase = createClient()
         const { data, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, username, display_name, country, province, city')
+          .select('id, username, display_name, nickname, gender, age, bio, wechat, parent_contact, country, province, city')
           .not('city', 'is', null)
 
         if (profilesError) throw profilesError
 
         const AMap = amapRef.current
         const geocoder = await loadGeocoder(AMap)
-        const userLocations = await Promise.all(
+        const userLocations: Array<User | null> = await Promise.all(
           (data ?? []).map(async (profile) => {
             const name = profile.display_name || profile.username || '匿名用户'
             const address = [profile.country, profile.province, profile.city].filter(Boolean).join(' ')
@@ -230,12 +235,17 @@ export default function Map({ isLoggedIn }: MapProps) {
               city: profile.city ?? '',
               lat: location.lat,
               lng: location.lng,
+              gender: profile.gender ?? null,
+              age: profile.age ?? null,
+              bio: profile.bio ?? null,
+              wechat: profile.wechat ?? null,
+              parentContact: Boolean(profile.parent_contact),
             }
           })
         )
 
         if (!cancelled) {
-          setUsers(userLocations.filter((u): u is User => Boolean(u)))
+          setUsers(userLocations.filter((u): u is User => u !== null))
         }
       } catch (e: any) {
         if (!cancelled) {
@@ -267,27 +277,18 @@ export default function Map({ isLoggedIn }: MapProps) {
       markersRef.current = []
     }
 
+    const escapeHtml = (value: string) =>
+      value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+
     users.forEach((u) => {
       const marker = new AMap.Marker({
         position: [u.lng, u.lat],
         title: isLoggedIn ? `${u.name} - ${u.city}` : '登录后查看用户信息',
-        label: {
-          content: isLoggedIn ? `${u.city} · ${u.name}` : '已注册用户',
-          direction: 'right',
-          offset: new AMap.Pixel(10, -4),
-          style: {
-            color: isLoggedIn ? '#1a3553' : '#244663',
-            border: isLoggedIn ? '1px solid #ddbf92' : '1px solid #c89d68',
-            background: isLoggedIn ? 'rgba(255, 252, 245, 0.96)' : 'rgba(255, 251, 240, 0.98)',
-            borderRadius: '999px',
-            fontSize: '12px',
-            padding: '4px 10px',
-            fontWeight: '700',
-            letterSpacing: '0.2px',
-            textShadow: isLoggedIn ? 'none' : '0 1px 0 rgba(255, 255, 255, 0.65)',
-            boxShadow: isLoggedIn ? '0 6px 16px rgba(48, 72, 99, 0.18)' : '0 7px 18px rgba(36, 70, 99, 0.22)',
-          },
-        },
         icon: markerIcon,
         offset: new AMap.Pixel(-16, -36),
       })
@@ -298,8 +299,20 @@ export default function Map({ isLoggedIn }: MapProps) {
           return
         }
 
+        const infoRows = [
+          `<div><strong style="font-size:14px;color:#14304d;">${escapeHtml(u.name)}</strong></div>`,
+          u.gender ? `<div>性别：${escapeHtml(String(u.gender))}</div>` : '',
+          u.age ? `<div>年龄：${escapeHtml(String(u.age))}</div>` : '',
+          u.city ? `<div>所在城市：${escapeHtml(u.city)}</div>` : '',
+          u.bio ? `<div>自我介绍：${escapeHtml(u.bio)}</div>` : '',
+          u.wechat ? `<div>微信号：${escapeHtml(u.wechat)}</div>` : '',
+          u.parentContact ? '<div>注册联系人：家长</div>' : '',
+        ]
+          .filter(Boolean)
+          .join('')
+          
         const infoWindow = new AMap.InfoWindow({
-          content: `<div style="padding:10px 12px;color:#1a3553;line-height:1.6;font-size:13px;"><strong style="font-size:14px;color:#14304d;">${u.name}</strong><br/>所在地：${u.city}</div>`,
+          content: `<div style="padding:10px 12px;color:#1a3553;line-height:1.6;font-size:13px;">${infoRows}</div>`,
         })
         infoWindow.open(map, [u.lng, u.lat])
       })

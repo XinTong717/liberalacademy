@@ -21,6 +21,8 @@ export default function ProfilePage() {
   const [gender, setGender] = useState<Gender | ''>('')
   const [age, setAge] = useState('')
   const [bio, setBio] = useState('')
+  const [wechat, setWechat] = useState('')
+  const [parentContact, setParentContact] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [user, setUser] = useState<User | null>(null)
@@ -86,7 +88,7 @@ export default function ProfilePage() {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('username, country, province, city, nickname, gender, age, bio')
+        .select('username, country, province, city, nickname, gender, age, bio, wechat, parent_contact')
         .eq('id', currentUser.id)
         .maybeSingle()
 
@@ -103,6 +105,8 @@ export default function ProfilePage() {
       setGender((profile?.gender as Gender | null) ?? '')
       setAge(profile?.age ? String(profile.age) : '')
       setBio(profile?.bio ?? '')
+      setWechat(profile?.wechat ?? '')
+      setParentContact(Boolean(profile?.parent_contact))
     }
 
     loadUser()
@@ -142,6 +146,8 @@ export default function ProfilePage() {
         gender: gender || null,
         age: parsedAge,
         bio: bio.trim() || null,
+        wechat: wechat.trim() || null,
+        parent_contact: parentContact,
         updated_at: new Date().toISOString(),
       }
 
@@ -308,6 +314,29 @@ export default function ProfilePage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="wechat" className="mb-2 block text-sm font-medium text-[#3f638c]">
+                微信号（可补充添加时需附的备注）
+              </label>
+              <Input
+                id="wechat"
+                type="text"
+                placeholder="例：wxid_123（加我时请备注来自自休学社区）"
+                value={wechat}
+                onChange={(e) => setWechat(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-[#4f6883]">
+              <input
+                id="parentContact"
+                type="checkbox"
+                checked={parentContact}
+                onChange={(e) => setParentContact(e.target.checked)}
+              />
+              <label htmlFor="parentContact">注册联系人是家长</label>
+            </div>
+            
             {message && (
               <div
               className={`rounded-md p-3 text-sm ${
