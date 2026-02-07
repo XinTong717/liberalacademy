@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-
+import { createClient } from '@/lib/supabase/client'
 
 type Community = {
   id: number
@@ -218,6 +218,8 @@ export default function CommunitiesPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newCommunityName, setNewCommunityName] = useState('')
   const [wechatContact, setWechatContact] = useState('')
+  const [communityDescription, setCommunityDescription] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const sectionOrder: Array<Community['section']> = ['🌟 近期活跃', '🌾 长期开放']
 
@@ -231,16 +233,39 @@ export default function CommunitiesPage() {
     setShowCreateForm((prev) => !prev)
   }
 
-  const handleSubmitCreateRequest = () => {
-    if (!newCommunityName.trim() || !wechatContact.trim()) {
-      window.alert('请先填写想要创建的群名和您的微信号。')
+  const handleSubmitCreateRequest = async () => {
+    if (!newCommunityName.trim() || !communityDescription.trim()) {
+      window.alert('请先填写想要创建的群名和简介。')
+      return
+    }
+
+    setIsSubmitting(true)
+    const supabase = createClient()
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !userData?.user) {
+      window.alert('请先登录后再提交社群申请。')
+      setIsSubmitting(false)
+      return
+    }
+
+    const { error: insertError } = await supabase.from('community_submissions').insert({
+      user_id: userData.user.id,
+      group_name: newCommunityName.trim(),
+      description: communityDescription.trim(),
+    })
+
+    if (insertError) {
+      window.alert('提交失败，请稍后再试。')
+      setIsSubmitting(false)
       return
     }
 
     window.alert('收到你的申请啦，我们会尽快联系你～')
     setNewCommunityName('')
-    setWechatContact('')
+    setCommunityDescription('')
     setShowCreateForm(false)
+    setIsSubmitting(false)
   }
 
   return (
@@ -281,15 +306,19 @@ export default function CommunitiesPage() {
               <label className="text-sm">
                 <span className="mb-1 block">简介</span>
                 <input
-                  value={wechatContact}
-                  onChange={(event) => setWechatContact(event.target.value)}
+                  value={communityDescription}
+                  onChange={(event) => setCommunityDescription(event.target.value)}
                   placeholder="请输入社群简介"
                   className="w-full rounded-md border border-[#b5c8db] bg-white px-3 py-2 text-sm text-[#36597a] outline-none ring-[#7ea1c4] focus:ring-2"
                 />
               </label>
             </div>
-            <Button className="mt-4 bg-[#6e8fb1] text-white hover:bg-[#5d7fa2]" onClick={handleSubmitCreateRequest}>
-              提交申请
+            <Button
+              className="mt-4 bg-[#6e8fb1] text-white hover:bg-[#5d7fa2]"
+              onClick={handleSubmitCreateRequest}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? '提交中...' : '提交申请'}
             </Button>
           </div>
         ) : null}
