@@ -4,6 +4,7 @@
 import posthog from 'posthog-js'
 import { PostHogProvider } from 'posthog-js/react'
 import { useEffect } from 'react'
+import PostHogAuthSync from '@/components/PostHogAuthSync'
 
 export function PHProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -20,5 +21,10 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  return <PostHogProvider client={posthog}>{children}</PostHogProvider>
+  return (
+    <PostHogProvider client={posthog}>
+      <PostHogAuthSync />
+      {children}
+    </PostHogProvider>
+  )
 }

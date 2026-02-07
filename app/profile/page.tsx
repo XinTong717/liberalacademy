@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { locationOptions } from '@/lib/location-options'
+import { usePostHog } from 'posthog-js/react'
 
 type Gender = '男' | '女' | '其他'
 
@@ -27,6 +28,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState('')
   const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
+  const posthog = usePostHog()
 
   const provinces = useMemo(() => {
     return Object.keys(locationOptions[country as keyof typeof locationOptions] ?? {})
@@ -157,6 +159,10 @@ export default function ProfilePage() {
         setMessage(`错误: ${saveError.message}`)
       } else {
         setMessage('个人信息已保存！')
+        posthog?.capture('update_profile', {
+          changed_city: city,
+          changed_gender: gender || null,
+        })
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : '发生未知错误'
@@ -169,6 +175,7 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
+    posthog?.reset()
     router.push('/')
   }
 

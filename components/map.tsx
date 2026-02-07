@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { usePostHog } from 'posthog-js/react'
 
 type User = {
   id: string
@@ -89,6 +90,7 @@ export default function Map({ isLoggedIn }: MapProps) {
   const [usersError, setUsersError] = useState<string | null>(null)
   const [usersLoading, setUsersLoading] = useState(false)
   const [showLoginHint, setShowLoginHint] = useState(false)
+  const posthog = usePostHog()
 
   const usersEmptyMessage = useMemo(() => {
     if (usersLoading) return '正在加载注册用户…'
@@ -295,10 +297,16 @@ export default function Map({ isLoggedIn }: MapProps) {
 
       marker.on('click', () => {
         if (!isLoggedIn) {
+          posthog?.capture('click_marker_anonymous', { city: u.city })
           setShowLoginHint(true)
           return
         }
 
+        posthog?.capture('view_user_profile_on_map', {
+          target_user_name: u.name,
+          target_city: u.city,
+        })
+        
         const infoRows = [
           `<div><strong style="font-size:14px;color:#14304d;">${escapeHtml(u.name)}</strong></div>`,
           u.gender ? `<div>性别：${escapeHtml(String(u.gender))}</div>` : '',
