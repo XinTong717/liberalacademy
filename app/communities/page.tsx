@@ -233,39 +233,47 @@ export default function CommunitiesPage() {
     setShowCreateForm((prev) => !prev)
   }
 
-  const handleSubmitCreateRequest = async () => {
-    if (!newCommunityName.trim() || !communityDescription.trim()) {
-      window.alert('请先填写想要创建的群名和简介。')
+  const handleSubmitCreateRequest = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (isSubmitting) return
+
+    const group_name = newCommunityName.trim()
+    const description = communityDescription.trim() // 正确使用社区简介字段
+    if (!group_name || !description) {
+      alert('请填写群名和简介')
       return
     }
-
+  
     setIsSubmitting(true)
-    const supabase = createClient()
-    const { data: userData, error: userError } = await supabase.auth.getUser()
-
-    if (userError || !userData?.user) {
-      window.alert('请先登录后再提交社群申请。')
+  
+    try {
+      const supabase = createClient()
+      const { data: { user }, error: userErr } = await supabase.auth.getUser()
+      if (userErr || !user) {
+        alert('请先登录')
+        return
+      }
+  
+      const { error } = await supabase
+        .from('community_submissions')
+        .insert({
+          user_id: user.id,
+          group_name,
+          description,
+        })
+  
+      if (error) throw error
+  
+      alert('提交成功！我们会尽快审核。')
+      setNewCommunityName('')
+      setWechatContact('')
+      setShowCreateForm(false)
+    } catch (err: any) {
+      console.error(err)
+      alert(`提交失败：${err?.message ?? String(err)}`)
+    } finally {
       setIsSubmitting(false)
-      return
     }
-
-    const { error: insertError } = await supabase.from('community_submissions').insert({
-      user_id: userData.user.id,
-      group_name: newCommunityName.trim(),
-      description: communityDescription.trim(),
-    })
-
-    if (insertError) {
-      window.alert('提交失败，请稍后再试。')
-      setIsSubmitting(false)
-      return
-    }
-
-    window.alert('收到你的申请啦，我们会尽快联系你～')
-    setNewCommunityName('')
-    setCommunityDescription('')
-    setShowCreateForm(false)
-    setIsSubmitting(false)
   }
 
   return (

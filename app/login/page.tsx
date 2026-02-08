@@ -266,7 +266,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium mb-2">
-                用户名
+                用户名（注册后不可更改。登录后可在个人信息页面添加对外展示中文昵称。）
               </label>
               <Input
                 id="username"
@@ -284,7 +284,7 @@ export default function LoginPage() {
               />
               {mode === 'register' && (
                 <p className="mt-2 text-xs text-[#6f8299]">
-                  用户名请使用 3-30 位英文字母、数字、点(.)、下划线(_)或短横线(-)，注册后不可更改。登录后可在个人信息页面添加修改对外展示昵称。
+                  用户名请使用 3-30 位英文字母、数字、点(.)、下划线(_)或短横线(-)。
                 </p>
               )}
             </div>

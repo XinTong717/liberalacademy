@@ -307,13 +307,22 @@ export default function Map({ isLoggedIn }: MapProps) {
           target_city: u.city,
         })
         
+        const wechatValue = u.wechat ? escapeHtml(u.wechat) : ''
+        const wechatRow = u.wechat
+          ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+              <button id="wechat-reveal-${u.id}" style="border:1px solid #d3b792;background:#fef7eb;color:#8a5a2b;border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer;">点击显示微信号</button>
+              <span id="wechat-value-${u.id}" style="display:none;font-weight:600;color:#1a3553;">${wechatValue}</span>
+              <button id="wechat-copy-${u.id}" data-wechat="${wechatValue}" disabled style="border:1px solid #c8d7e6;background:#f0f5fb;color:#4b6b89;border-radius:999px;padding:2px 10px;font-size:12px;opacity:0.5;cursor:not-allowed;">复制微信号</button>
+            </div>`
+          : ''
+
         const infoRows = [
           `<div><strong style="font-size:14px;color:#14304d;">${escapeHtml(u.name)}</strong></div>`,
           u.gender ? `<div>性别：${escapeHtml(String(u.gender))}</div>` : '',
           u.age ? `<div>年龄：${escapeHtml(String(u.age))}</div>` : '',
           u.city ? `<div>所在地：${escapeHtml(u.city)}</div>` : '',
           u.bio ? `<div>自我介绍：${escapeHtml(u.bio)}</div>` : '',
-          u.wechat ? `<div>微信号：${escapeHtml(u.wechat)}</div>` : '',
+          wechatRow,
           u.parentContact ? '<div>注册联系人：家长</div>' : '',
         ]
           .filter(Boolean)
@@ -323,12 +332,59 @@ export default function Map({ isLoggedIn }: MapProps) {
           content: `<div style="padding:10px 12px;color:#1a3553;line-height:1.6;font-size:13px;">${infoRows}</div>`,
         })
         infoWindow.open(map, [u.lng, u.lat])
+      
+        if (u.wechat) {
+          setTimeout(() => {
+            const revealButton = document.getElementById(`wechat-reveal-${u.id}`) as HTMLButtonElement | null
+            const wechatSpan = document.getElementById(`wechat-value-${u.id}`) as HTMLSpanElement | null
+            const copyButton = document.getElementById(`wechat-copy-${u.id}`) as HTMLButtonElement | null
+
+            if (!revealButton || !wechatSpan || !copyButton) return
+
+            const handleReveal = () => {
+              wechatSpan.style.display = 'inline'
+              copyButton.disabled = false
+              copyButton.style.opacity = '1'
+              copyButton.style.cursor = 'pointer'
+              revealButton.disabled = true
+              revealButton.style.opacity = '0.6'
+              revealButton.style.cursor = 'not-allowed'
+              posthog?.capture('click_reveal_wechat_on_map', {
+                target_user_name: u.name,
+                target_city: u.city,
+              })
+            }
+
+            const handleCopy = async () => {
+              const wechatText = u.wechat ?? ''
+              if (!wechatText) return
+              if (!navigator.clipboard?.writeText) {
+                copyButton.textContent = '无法复制'
+                return
+              }
+              try {
+                await navigator.clipboard.writeText(wechatText)
+                copyButton.textContent = '已复制'
+                setTimeout(() => {
+                  if (copyButton) {
+                    copyButton.textContent = '复制微信号'
+                  }
+                }, 1600)
+              } catch {
+                copyButton.textContent = '复制失败'
+              }
+            }
+
+            revealButton.addEventListener('click', handleReveal)
+            copyButton.addEventListener('click', handleCopy)
+          }, 0)
+        }
       })
 
       map.add(marker)
       markersRef.current.push(marker)
     })
-  }, [users, isLoggedIn])
+  }, [users, isLoggedIn, posthog])
 
   return (
     <div className="relative h-screen w-full overflow-hidden border-b border-[#f2e2c9] shadow-[0_20px_60px_-50px_rgba(164,133,94,0.6)]">
