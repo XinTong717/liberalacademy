@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { locationOptions } from '@/lib/location-options'
+import { defaultCountry, locationOptions } from '@/lib/location-options'
 
 const USERNAME_RULE = /^[a-zA-Z0-9._-]{3,30}$/
 const PASSWORD_MIN_LENGTH = 6
@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [country, setCountry] = useState('中国')
+  const [country, setCountry] = useState(defaultCountry)
   const [province, setProvince] = useState('')
   const [city, setCity] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -86,13 +86,36 @@ export default function LoginPage() {
 
       if (mode === 'login') {
         const email = `${username}@users.liberalacademy.site`
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({
+        email,
           password,
         })
 
         if (error) {
           setMessage(`错误: ${error.message}`)
+          return
+        }
+
+        const signedInUserId = signInData.user?.id
+        if (signedInUserId) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('nickname, gender, age, bio')
+            .eq('id', signedInUserId)
+            .maybeSingle()
+
+          if (profileError) {
+            setMessage(`错误: ${profileError.message}`)
+            return
+          }
+
+          const isBlank = (value?: string | null) => !value || value.trim() === ''
+          const needsProfileCompletion =
+            !profile ||
+            (isBlank(profile.nickname) && isBlank(profile.gender) && !profile.age && isBlank(profile.bio))
+
+          setMessage(`欢迎回来，${username}！登录成功。`)
+          router.push(needsProfileCompletion ? '/profile' : '/')
           return
         }
 

@@ -202,65 +202,6 @@ export default function ProfilePage() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div>
-                <label htmlFor="country" className="mb-2 block text-sm font-medium text-[#3f638c]">
-                  国家
-                </label>
-                <select
-                  id="country"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  className="h-10 w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"
-                  required
-                >
-                  {Object.keys(locationOptions).map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-              <label htmlFor="province" className="mb-2 block text-sm font-medium text-[#3f638c]">
-                  省/州
-                </label>
-                <select
-                  id="province"
-                  value={province}
-                  onChange={(e) => setProvince(e.target.value)}
-                  className="h-10 w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"
-                  required
-                >
-                  {provinces.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-              <label htmlFor="city" className="mb-2 block text-sm font-medium text-[#3f638c]">
-                  城市
-                </label>
-                <select
-                  id="city"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="h-10 w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"
-                  required
-                >
-                  {cities.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
             <div>
             <label htmlFor="nickname" className="mb-2 block text-sm font-medium text-[#3f638c]">
                 昵称
@@ -344,6 +285,65 @@ export default function ProfilePage() {
               <label htmlFor="parentContact">注册联系人是家长</label>
             </div>
 
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label htmlFor="country" className="mb-2 block text-sm font-medium text-[#3f638c]">
+                  国家
+                </label>
+                <select
+                  id="country"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="h-10 w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"
+                  required
+                >
+                  {Object.keys(locationOptions).map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+              <label htmlFor="province" className="mb-2 block text-sm font-medium text-[#3f638c]">
+                  省/州
+                </label>
+                <select
+                  id="province"
+                  value={province}
+                  onChange={(e) => setProvince(e.target.value)}
+                  className="h-10 w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"
+                  required
+                >
+                  {provinces.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+              <label htmlFor="city" className="mb-2 block text-sm font-medium text-[#3f638c]">
+                  城市
+                </label>
+                <select
+                  id="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="h-10 w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"
+                  required
+                >
+                  {cities.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
             {message && (
               <div
               className={`rounded-md p-3 text-sm ${
