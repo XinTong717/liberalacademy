@@ -257,7 +257,6 @@ export default function CommunitiesPage() {
       const { error } = await supabase
         .from('community_submissions')
         .insert({
-          user_id: user.id,
           group_name,
           description,
         })
