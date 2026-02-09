@@ -12,6 +12,70 @@ import { defaultCountry, locationOptions } from '@/lib/location-options'
 const USERNAME_RULE = /^[a-zA-Z0-9._-]{3,30}$/
 const PASSWORD_MIN_LENGTH = 6
 
+const countryCoordinates: Record<string, [number, number]> = {
+  美国: [-100.0, 40.0],
+  日本: [138.0, 36.0],
+  新加坡: [103.8, 1.35],
+  韩国: [127.8, 36.5],
+  泰国: [100.9, 15.8],
+  马来西亚: [102.0, 4.2],
+  英国: [-2.0, 54.0],
+  加拿大: [-106.0, 56.0],
+  澳大利亚: [133.0, -25.0],
+  德国: [10.0, 51.0],
+  法国: [2.0, 46.0],
+  荷兰: [5.3, 52.2],
+  意大利: [12.5, 42.8],
+  西班牙: [-3.7, 40.3],
+  瑞士: [8.2, 46.8],
+  俄罗斯: [105.0, 61.0],
+  新西兰: [172.0, -41.0],
+  越南: [108.0, 14.1],
+  菲律宾: [122.8, 12.9],
+  印度: [78.9, 21.0],
+  印尼: [113.9, -0.8],
+  阿联酋: [53.8, 23.4],
+  土耳其: [35.2, 39.0],
+  肯尼亚: [37.9, 0.0],
+}
+
+const fetchCoordinates = async (
+  country: string,
+  province: string,
+  city: string
+): Promise<{ lat: number; lng: number } | null> => {
+  if (country && country !== '中国' && countryCoordinates[country]) {
+    const [lng, lat] = countryCoordinates[country]
+    const randomOffset = () => (Math.random() - 0.5) * 0.1
+    return { lat: lat + randomOffset(), lng: lng + randomOffset() }
+  }
+
+  const address = [province, city].filter(Boolean).join('')
+  if (!address) return null
+
+  const response = await fetch('/api/geocode', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      address,
+      city: city || province || '全国',
+    }),
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  const data = await response.json()
+  if (typeof data?.lat === 'number' && typeof data?.lng === 'number') {
+    return { lat: data.lat, lng: data.lng }
+  }
+
+  return null
+}
+
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
@@ -171,6 +235,19 @@ export default function LoginPage() {
         return
       }
 
+      let lat: number | null = null
+      let lng: number | null = null
+
+      try {
+        const coordinates = await fetchCoordinates(country, province, city)
+        if (coordinates) {
+          lat = coordinates.lat
+          lng = coordinates.lng
+        }
+      } catch (error) {
+        console.error('Geocode failed during registration', error)
+      }
+
       const profilePayload = {
         id: user.id,
         username,
@@ -178,6 +255,8 @@ export default function LoginPage() {
         country,
         province,
         city,
+        lat,
+        lng,
       }
 
       let sessionUserId = signUpData.session?.user?.id

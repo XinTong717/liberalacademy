@@ -13,13 +13,6 @@ import { usePostHog } from 'posthog-js/react'
 
 type Gender = '男' | '女' | '其他'
 
-declare global {
-  interface Window {
-    AMap?: any
-    _AMapSecurityConfig?: any
-  }
-}
-
 const countryCoordinates: Record<string, [number, number]> = {
   美国: [-100.0, 40.0],
   日本: [138.0, 36.0],
@@ -45,65 +38,6 @@ const countryCoordinates: Record<string, [number, number]> = {
   阿联酋: [53.8, 23.4],
   土耳其: [35.2, 39.0],
   肯尼亚: [37.9, 0.0],
-}
-
-function loadAMap(key: string, securityJsCode: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined') {
-      reject(new Error('AMap only works in browser'))
-      return
-    }
-
-    window._AMapSecurityConfig = { securityJsCode }
-
-    if (window.AMap) {
-      resolve(window.AMap)
-      return
-    }
-
-    const existing = document.getElementById('amap-js') as HTMLScriptElement | null
-    if (existing) {
-      existing.addEventListener('load', () => resolve(window.AMap))
-      existing.addEventListener('error', () => reject(new Error('AMap script load failed')))
-      return
-    }
-
-    const script = document.createElement('script')
-    script.id = 'amap-js'
-    script.src = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(key)}&plugin=AMap.Geocoder`
-    script.async = true
-    script.onload = () => resolve(window.AMap)
-    script.onerror = () => reject(new Error('AMap script load failed'))
-    document.head.appendChild(script)
-  })
-}
-
-function loadGeocoder(AMap: any): Promise<any> {
-  return new Promise((resolve, reject) => {
-    if (!AMap) {
-      reject(new Error('AMap not ready'))
-      return
-    }
-    if (AMap.Geocoder) {
-      resolve(new AMap.Geocoder({ city: '全国' }))
-      return
-    }
-    if (typeof AMap.plugin !== 'function') {
-      reject(new Error('AMap plugin API unavailable'))
-      return
-    }
-    AMap.plugin('AMap.Geocoder', () => {
-      try {
-        if (!AMap.Geocoder) {
-          reject(new Error('AMap Geocoder plugin load failed'))
-          return
-        }
-        resolve(new AMap.Geocoder({ city: '全国' }))
-      } catch (error) {
-        reject(error)
-      }
-    })
-  })
 }
 
 export default function ProfilePage() {
@@ -217,25 +151,27 @@ export default function ProfilePage() {
       return { lat: lat + randomOffset(), lng: lng + randomOffset() }
     }
 
-    const key = process.env.NEXT_PUBLIC_AMAP_KEY
-    const securityJsCode = process.env.AMAP_SECURITY_JSCODE
-    if (!key || !securityJsCode) {
-      return null
-    }
-
     try {
-      const AMap = await loadAMap(key, securityJsCode)
-      const geocoder = await loadGeocoder(AMap)
-      return await new Promise((resolve) => {
-        geocoder.getLocation(addressStr, (status: string, result: any) => {
-          if (status === 'complete' && result.geocodes?.length) {
-            const { location } = result.geocodes[0]
-            resolve({ lat: location.lat, lng: location.lng })
-            return
-          }
-          resolve(null)
-        }, cityLimit)
+      const response = await fetch('/api/geocode', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          address: addressStr,
+          city: cityLimit,
+        }),
       })
+      if (!response.ok) {
+        return null
+      }
+
+      const data = await response.json()
+      if (typeof data?.lat === 'number' && typeof data?.lng === 'number') {
+        return { lat: data.lat, lng: data.lng }
+      }
+
+      return null
     } catch (error) {
       console.error('Geocoding failed', error)
       return null

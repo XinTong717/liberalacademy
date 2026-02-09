@@ -7,10 +7,10 @@ export async function POST(req: NextRequest) {
     const { address, city } = await req.json()
     
     // 环境变量：KEY 可以公开，JSCODE 必须保密
-    const key = process.env.NEXT_PUBLIC_AMAP_KEY 
-    const jscode = process.env.AMAP_SECURITY_JSCODE 
+    const key = process.env.NEXT_PUBLIC_AMAP_KEY
+    const jscode = process.env.AMAP_SECURITY_JSCODE
 
-    if (!key || !jscode) {
+    if (!key) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
     if (!address) {
@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
     url.searchParams.set('key', key)
     url.searchParams.set('address', address)
     if (city) url.searchParams.set('city', city)
-    
+    if (jscode) url.searchParams.set('jscode', jscode)
+
     // 关键：Web服务API (Server端) 需要把 code 放在 jscode 参数里（如果绑定了的话）
     // 如果你的Key是Web端(JSAPI)，通常Server端调用不需要jscode，
     // 但既然你用的是同一套Key，为了保险，带上或者确认Key类型。

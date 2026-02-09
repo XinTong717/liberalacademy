@@ -33,6 +33,10 @@ function loadAMap(key: string): Promise<any> {
   return new Promise((resolve, reject) => {
     if (window.AMap) return resolve(window.AMap)
 
+    window._AMapSecurityConfig = {
+      serviceHost: `${window.location.origin}/_AMapService`,
+    }
+
     const existing = document.getElementById('amap-js') as HTMLScriptElement | null
     if (existing) {
       existing.addEventListener('load', () => resolve(window.AMap))
@@ -47,34 +51,6 @@ function loadAMap(key: string): Promise<any> {
     script.onload = () => resolve(window.AMap)
     script.onerror = () => reject(new Error('AMap script load failed'))
     document.head.appendChild(script)
-  })
-}
-
-function loadGeocoder(AMap: any): Promise<any> {
-  return new Promise((resolve, reject) => {
-    if (!AMap) {
-      reject(new Error('AMap not ready'))
-      return
-    }
-    if (AMap.Geocoder) {
-      resolve(new AMap.Geocoder({ city: '全国' }))
-      return
-    }
-    if (typeof AMap.plugin !== 'function') {
-      reject(new Error('AMap plugin API unavailable'))
-      return
-    }
-    AMap.plugin('AMap.Geocoder', () => {
-      try {
-        if (!AMap.Geocoder) {
-          reject(new Error('AMap Geocoder plugin load failed'))
-          return
-        }
-        resolve(new AMap.Geocoder({ city: '全国' }))
-      } catch (error) {
-        reject(error)
-      }
-    })
   })
 }
 
@@ -101,18 +77,11 @@ export default function Map({ isLoggedIn }: MapProps) {
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_AMAP_KEY
-    const securityJsCode = process.env.AMAP_SECURITY_JSCODE
 
     if (!key) {
       setError('缺少 NEXT_PUBLIC_AMAP_KEY（请在 .env.local / Zeabur 环境变量里设置）')
       return
     }
-    if (!securityJsCode) {
-      setError('缺少 AMAP_SECURITY_JSCODE（高德 JSAPI v2 新 key 需要安全密钥）')
-      return
-    }
-
-    window._AMapSecurityConfig = { securityJsCode }
 
     let cancelled = false
 
@@ -197,33 +166,6 @@ export default function Map({ isLoggedIn }: MapProps) {
 
     let cancelled = false
 
-    const countryCoordinates: Record<string, [number, number]> = {
-      美国: [-100.0, 40.0],
-      日本: [138.0, 36.0],
-      新加坡: [103.8, 1.35],
-      韩国: [127.8, 36.5],
-      泰国: [100.9, 15.8],
-      马来西亚: [102.0, 4.2],
-      英国: [-2.0, 54.0],
-      加拿大: [-106.0, 56.0],
-      澳大利亚: [133.0, -25.0],
-      德国: [10.0, 51.0],
-      法国: [2.0, 46.0],
-      荷兰: [5.3, 52.2],
-      意大利: [12.5, 42.8],
-      西班牙: [-3.7, 40.3],
-      瑞士: [8.2, 46.8],
-      俄罗斯: [105.0, 61.0],
-      新西兰: [172.0, -41.0],
-      越南: [108.0, 14.1],
-      菲律宾: [122.8, 12.9],
-      印度: [78.9, 21.0],
-      印尼: [113.9, -0.8],
-      阿联酋: [53.8, 23.4],
-      土耳其: [35.2, 39.0],
-      肯尼亚: [37.9, 0.0],
-    }
-
     const loadUsers = async () => {
       setUsersLoading(true)
       setUsersError(null)
@@ -231,69 +173,31 @@ export default function Map({ isLoggedIn }: MapProps) {
         const supabase = createClient()
         const { data, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, username, display_name, nickname, gender, age, bio, wechat, parent_contact, country, province, city')
+          .select(
+            'id, username, display_name, nickname, gender, age, bio, wechat, parent_contact, country, province, city, lat, lng'
+          )
+          .not('lat', 'is', null)
+          .not('lng', 'is', null)
 
         if (profilesError) throw profilesError
 
-        const AMap = amapRef.current
-        const geocoder = await loadGeocoder(AMap)
-        const userLocations: Array<User | null> = await Promise.all(
-          (data ?? []).map(async (profile) => {
-            const name = profile.display_name || profile.username || '匿名用户'
-            if (profile.country && profile.country !== '中国' && countryCoordinates[profile.country]) {
-              const [lng, lat] = countryCoordinates[profile.country]
-              const randomOffset = () => (Math.random() - 0.5) * 0.5
-              return {
-                id: profile.id,
-                name,
-                city: profile.country,
-                lat: lat + randomOffset(),
-                lng: lng + randomOffset(),
-                gender: profile.gender ?? null,
-                age: profile.age ?? null,
-                bio: profile.bio ?? null,
-                wechat: profile.wechat ?? null,
-                parentContact: Boolean(profile.parent_contact),
-              }
-            }
-
-            const address = [profile.province, profile.city].filter(Boolean).join('')
-            if (!address && !profile.province) return null
-            const cityLimit = profile.city || profile.province || '全国'
-
-            const location = await Promise.race([
-              new Promise<{ lng: number; lat: number } | null>((resolve) => {
-                geocoder.getLocation(address, (status: string, result: any) => {
-                  if (status === 'complete' && result.geocodes?.length) {
-                    const { location } = result.geocodes[0]
-                    resolve({ lng: location.lng, lat: location.lat })
-                    return
-                  }
-                  resolve(null)
-                }, cityLimit)
-              }),
-              new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
-            ])
-
-            if (!location) return null
-
-            return {
-              id: profile.id,
-              name,
-              city: profile.city ?? profile.province ?? '',
-              lat: location.lat,
-              lng: location.lng,
-              gender: profile.gender ?? null,
-              age: profile.age ?? null,
-              bio: profile.bio ?? null,
-              wechat: profile.wechat ?? null,
-              parentContact: Boolean(profile.parent_contact),
-            }
-          })
-        )
+        const userLocations: User[] = (data ?? [])
+        .filter((profile) => profile.lat !== null && profile.lng !== null)
+        .map((profile) => ({
+          id: profile.id,
+          name: profile.display_name || profile.username || '匿名用户',
+          city: profile.city ?? profile.province ?? profile.country ?? '',
+          lat: profile.lat as number,
+          lng: profile.lng as number,
+          gender: profile.gender ?? null,
+          age: profile.age ?? null,
+          bio: profile.bio ?? null,
+          wechat: profile.wechat ?? null,
+          parentContact: Boolean(profile.parent_contact),
+        }))
 
         if (!cancelled) {
-          setUsers(userLocations.filter((u): u is User => u !== null))
+          setUsers(userLocations)
         }
       } catch (e: any) {
         if (!cancelled) {
