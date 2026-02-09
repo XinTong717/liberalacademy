@@ -1,5 +1,18 @@
 import type { NextConfig } from "next";
 
+const csp = `
+default-src 'self';
+script-src 'self' 'unsafe-inline' 'unsafe-eval' https://webapi.amap.com https://jsapi.amap.com;
+style-src 'self' 'unsafe-inline';
+img-src 'self' data: blob: https://*.amap.com;
+connect-src 'self'
+  https://*.amap.com
+  https://restapi.amap.com
+  https://vdata.amap.com
+  https://us.i.posthog.com
+  https://*.baseapi.memfiredb.com;
+`;
+
 const nextConfig: NextConfig = {  
   output: 'standalone',
 
@@ -8,12 +21,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: "/(.*)",
         headers: [
           {
             key: 'Content-Security-Policy',
-            value:
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://webapi.amap.com https://jsapi.amap.com https://restapi.amap.com https://vdata.amap.com https://us-assets.i.posthog.com; script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://webapi.amap.com https://jsapi.amap.com https://restapi.amap.com https://vdata.amap.com https://us-assets.i.posthog.com; connect-src 'self' https://jsapi.amap.com https://restapi.amap.com https://vdata.amap.com https://us.i.posthog.com https://*.baseapi.memfiredb.com; worker-src 'self' blob:;",
+            value:csp.replace(/\s{2,}/g, " ").trim(),
           },
         ],
       },
