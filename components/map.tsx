@@ -101,14 +101,14 @@ export default function Map({ isLoggedIn }: MapProps) {
 
   useEffect(() => {
     const key = process.env.NEXT_PUBLIC_AMAP_KEY
-    const securityJsCode = process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE
+    const securityJsCode = process.env.AMAP_SECURITY_JSCODE
 
     if (!key) {
       setError('缺少 NEXT_PUBLIC_AMAP_KEY（请在 .env.local / Zeabur 环境变量里设置）')
       return
     }
     if (!securityJsCode) {
-      setError('缺少 NEXT_PUBLIC_AMAP_SECURITY_CODE（高德 JSAPI v2 新 key 需要安全密钥）')
+      setError('缺少 AMAP_SECURITY_JSCODE（高德 JSAPI v2 新 key 需要安全密钥）')
       return
     }
 

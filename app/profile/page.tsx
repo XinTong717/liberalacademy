@@ -218,7 +218,7 @@ export default function ProfilePage() {
     }
 
     const key = process.env.NEXT_PUBLIC_AMAP_KEY
-    const securityJsCode = process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE
+    const securityJsCode = process.env.AMAP_SECURITY_JSCODE
     if (!key || !securityJsCode) {
       return null
     }
