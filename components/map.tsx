@@ -34,7 +34,7 @@ function loadAMap(key: string): Promise<any> {
     if (window.AMap) return resolve(window.AMap)
 
     window._AMapSecurityConfig = {
-      serviceHost: `${window.location.origin}/_AMapService`,
+      serviceHost: `${window.location.origin}/api/amap`,
     }
 
     const existing = document.getElementById('amap-js') as HTMLScriptElement | null
