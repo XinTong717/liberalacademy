@@ -31,12 +31,17 @@ declare global {
 
 function loadAMap(key: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    if (window.AMap) return resolve(window.AMap)
+    if (typeof window === 'undefined') return
 
-    window._AMapSecurityConfig = {
+    (window as any)._AMapSecurityConfig = {
       serviceHost: `${window.location.origin}/api/amap`,
     }
 
+    if ((window as any).AMap) {
+      resolve((window as any).AMap)
+      return
+    }
+    
     const existing = document.getElementById('amap-js') as HTMLScriptElement | null
     if (existing) {
       existing.addEventListener('load', () => resolve(window.AMap))
