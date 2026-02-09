@@ -357,7 +357,7 @@ export default function LoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 minLength={3}
                 maxLength={30}
-                pattern="[a-zA-Z0-9._-]{3,30}"
+                pattern="[a-zA-Z0-9._\-]{3,30}"
                 title="用户名需为 3-30 位，仅支持英文字母、数字、点(.)、下划线(_)和短横线(-)。"
                 required
               />

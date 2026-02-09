@@ -38,7 +38,11 @@ const countryCoordinates: Record<string, [number, number]> = {
   阿联酋: [53.8, 23.4],
   土耳其: [35.2, 39.0],
   肯尼亚: [37.9, 0.0],
+  中国: [104.0, 35.0],
 }
+
+const isOtherLocation = (value: string) => value.includes('其他')
+const normalizeRegionName = (value: string) => value.split('_')[0] ?? value
 
 export default function ProfilePage() {
   const [country, setCountry] = useState('')
@@ -145,8 +149,8 @@ export default function ProfilePage() {
     addressStr: string,
     cityLimit: string
   ): Promise<{ lat: number; lng: number } | null> => {
-    if (country && country !== '中国' && countryCoordinates[country]) {
-      const [lng, lat] = countryCoordinates[country]
+    if (country && countryCoordinates[country] && (country !== '中国' || !addressStr)) {
+    const [lng, lat] = countryCoordinates[country]
       const randomOffset = () => (Math.random() - 0.5) * 0.1
       return { lat: lat + randomOffset(), lng: lng + randomOffset() }
     }
