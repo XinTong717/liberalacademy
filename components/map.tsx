@@ -34,14 +34,14 @@ function loadAMap(key: string): Promise<any> {
     if (typeof window === 'undefined') return
 
     (window as any)._AMapSecurityConfig = {
-      serviceHost: `${window.location.origin}/api/amap`,
+      serviceHost: `${window.location.origin}/_AMapService`,
     }
 
     if ((window as any).AMap) {
       resolve((window as any).AMap)
       return
     }
-    
+
     const existing = document.getElementById('amap-js') as HTMLScriptElement | null
     if (existing) {
       existing.addEventListener('load', () => resolve(window.AMap))
