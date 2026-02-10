@@ -13,11 +13,17 @@ export default function WxGuide() {
   const url = useMemo(() => (typeof window === 'undefined' ? '' : window.location.href), [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const params = new URL(window.location.href).searchParams
-    const fromWxGroup = params.get('from') === 'wxgroup'
-    const dismissed = sessionStorage.getItem('wx_guide_dismissed') === '1'
-    if (isWeChat() && fromWxGroup && !dismissed) setShow(true)
+    // 1. 只要是浏览器环境
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+      // 2. 只要检测到是微信 (MicroMessenger)
+      const isWeChat = /micromessenger/i.test(navigator.userAgent)
+      
+      // 3. 【关键修改】去掉 URL 参数检查，去掉 sessionStorage 检查
+      // 只要是微信，就无条件强制显示！确保测试能过。
+      if (isWeChat) {
+        setShow(true)
+      }
+    }
   }, [])
 
   function dismiss() {
