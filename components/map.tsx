@@ -344,7 +344,7 @@ export default function Map({ isLoggedIn }: MapProps) {
         const wechatValue = u.wechat ? escapeHtml(u.wechat) : ''
         const wechatRow = u.wechat
           ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-              <button id="wechat-reveal-${u.id}" style="border:1px solid #d3b792;background:#fef7eb;color:#8a5a2b;border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer;">点击显示微信号</button>
+              <button id="wechat-reveal-${u.id}" style="border:1px solid #d3b792;background:#fef7eb;color:#8a5a2b;border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer;">点击显示微信号（添加时请自我介绍）</button>
               <span id="wechat-value-${u.id}" style="display:none;font-weight:600;color:#1a3553;">${wechatValue}</span>
               <button id="wechat-copy-${u.id}" data-wechat="${wechatValue}" disabled style="border:1px solid #c8d7e6;background:#f0f5fb;color:#4b6b89;border-radius:999px;padding:2px 10px;font-size:12px;opacity:0.5;cursor:not-allowed;">复制微信号</button>
             </div>`
