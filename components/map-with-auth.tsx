@@ -10,7 +10,6 @@ const Map = dynamic(() => import('@/components/map'), {
 
 export default function MapWithAuth() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const supabase = createClient()
@@ -19,7 +18,6 @@ export default function MapWithAuth() {
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return
       setIsLoggedIn(!!data.session?.user)
-      setIsLoading(false)
     })
 
     const {
@@ -34,17 +32,6 @@ export default function MapWithAuth() {
       subscription.unsubscribe()
     }
   }, [])
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#fbf7ee]">
-        <div className="text-center">
-          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#46688f] border-t-transparent"></div>
-          <p className="text-sm text-[#5f83ad]">加载地图中...</p>
-        </div>
-      </div>
-    )
-  }
 
   return <Map isLoggedIn={isLoggedIn} />
 }
