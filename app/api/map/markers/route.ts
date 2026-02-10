@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createPublicClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
 
@@ -37,7 +37,7 @@ const resolveDisplayLocation = (
 
 export async function GET() {
   try {
-    const supabase = createPublicClient()
+    const supabase = await createClient()
     const { data, error } = await supabase
       .from('profiles')
       .select('id, username, display_name, nickname, country, province, city, lat, lng')
