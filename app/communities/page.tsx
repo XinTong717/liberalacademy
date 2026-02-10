@@ -72,6 +72,15 @@ const communities: Community[] = [
   },
   {
     id: 7,
+    section: '🌟 近期活跃',
+    name: '🤓 言核社',
+    summary:
+      '语言学社群。可以分享：任何语言学相关知识、学习方法、学习资源、经历、你的作品。目标人群：自学外语、想要有个学习搭子、想要获取自学资源、想围观他人的语言学习经历，想跟人讨论语言学相关知识',
+    owner: 'Bright',
+    wechat: 'Br18878791280',
+  },
+  {
+    id: 8,
     section: '🌾 长期开放',
     name: '💸 搞钱要紧！',
     summary:
@@ -80,7 +89,7 @@ const communities: Community[] = [
     wechat: 'Y220284Q',
   },
   {
-    id: 8,
+    id: 9,
     section: '🌾 长期开放',
     name: '💡 机遇：Gap游学实习资源分享',
     summary:
@@ -89,7 +98,7 @@ const communities: Community[] = [
     wechat: 'kl1231208',
   },
   {
-    id: 9,
+    id: 10,
     section: '🌾 长期开放',
     name: '🔎 法内狂徒聚集地',
     summary:
@@ -98,7 +107,7 @@ const communities: Community[] = [
     wechat: 'Ronnie398376',
   },
   {
-    id: 10,
+    id: 11,
     section: '🌾 长期开放',
     name: '🎉【成功日记】行动力！',
     summary:
@@ -107,7 +116,7 @@ const communities: Community[] = [
     wechat: 'awj2309',
   },
   {
-    id: 11,
+    id: 12,
     section: '🌾 长期开放',
     name: '🔮 神秘学Mystic Hub',
     summary:
@@ -116,7 +125,7 @@ const communities: Community[] = [
     wechat: 'D13626159494',
   },
   {
-    id: 12,
+    id: 13,
     section: '🌾 长期开放',
     name: '❤️‍🩹 心灵港湾计划',
     summary:
@@ -125,7 +134,7 @@ const communities: Community[] = [
     wechat: 'Skystu_lifulin',
   },
   {
-    id: 13,
+    id: 14,
     section: '🌾 长期开放',
     name: '🪅 塔菲石（神经多样性友好）',
     summary:
@@ -134,7 +143,7 @@ const communities: Community[] = [
     wechat: 'J478920456',
   },
   {
-    id: 14,
+    id: 15,
     section: '🌾 长期开放',
     name: '📦 闲置循环小屋',
     summary:
@@ -143,7 +152,7 @@ const communities: Community[] = [
     wechat: 'hkpsjhp',
   },
   {
-    id: 15,
+    id: 16,
     section: '🌾 长期开放',
     name: '📚 自由学社Alevel学习窝点',
     summary:
@@ -152,7 +161,7 @@ const communities: Community[] = [
     wechat: 'Metaplexis_japonica',
   },
   {
-    id: 16,
+    id: 17,
     section: '🌾 长期开放',
     name: '🤖 技术交流会',
     summary:
@@ -161,7 +170,7 @@ const communities: Community[] = [
     wechat: 'K9403l29iZ_e',
   },
   {
-    id: 17,
+    id: 18,
     section: '🌾 长期开放',
     name: '👁 荣格八维九型opssoc推广群',
     summary: '荣格八维、九型及相关话题交流社群。',
@@ -169,7 +178,7 @@ const communities: Community[] = [
     wechat: 'J478920456',
   },
   {
-    id: 18,
+    id: 19,
     section: '🌾 长期开放',
     name: '🧨 学社大胆分部',
     summary: '学社大群不便讨论内容的延展交流空间（如炒币等）。',
@@ -177,7 +186,7 @@ const communities: Community[] = [
     wechat: '13908000900',
   },
   {
-    id: 19,
+    id: 20,
     section: '🌾 长期开放',
     name: '🥢 饭蒙子聚集地',
     summary: '分享吃饭、做饭日常的生活向社群。',
@@ -185,7 +194,7 @@ const communities: Community[] = [
     wechat: 'wxid_wvivprotd00n22',
   },
   {
-    id: 20,
+    id: 21,
     section: '🌾 长期开放',
     name: '🧠 10倍速学习之道（家长友好）',
     summary:
@@ -194,7 +203,7 @@ const communities: Community[] = [
     wechat: 'nvr07542693209',
   },
   {
-    id: 21,
+    id: 22,
     section: '🌾 长期开放',
     name: '📒 英语群',
     summary: '英语学习交流与打卡互助群，成员可随意发言相互监督。',
@@ -202,7 +211,7 @@ const communities: Community[] = [
     wechat: 'yulinnoname',
   },
   {
-    id: 22,
+    id: 23,
     section: '🌾 长期开放',
     name: '📖 星光读写公社',
     summary:
