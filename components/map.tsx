@@ -59,6 +59,38 @@ function loadAMap(key: string): Promise<any> {
   })
 }
 
+const isOtherCity = (value?: string | null) => value === '其他' || value === '其他城市'
+const isOtherProvince = (value?: string | null) => value === '其他地区' || value === '其他'
+
+const resolveDisplayLocation = (
+  country?: string | null,
+  province?: string | null,
+  city?: string | null
+) => {
+  const trimmedCity = city?.trim() ?? ''
+  const trimmedProvince = province?.trim() ?? ''
+  const trimmedCountry = country?.trim() ?? ''
+
+  if (trimmedCity) {
+    if (!isOtherCity(trimmedCity)) {
+      return trimmedCity
+    }
+    if (trimmedProvince && !isOtherProvince(trimmedProvince)) {
+      return trimmedProvince
+    }
+    return trimmedCountry
+  }
+
+  if (trimmedProvince) {
+    if (!isOtherProvince(trimmedProvince)) {
+      return trimmedProvince
+    }
+    return trimmedCountry
+  }
+
+  return trimmedCountry
+}
+
 export default function Map({ isLoggedIn }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
@@ -187,19 +219,19 @@ export default function Map({ isLoggedIn }: MapProps) {
         if (profilesError) throw profilesError
 
         const userLocations: User[] = (data ?? [])
-        .filter((profile) => profile.lat !== null && profile.lng !== null)
-        .map((profile) => ({
-          id: profile.id,
-          name: profile.display_name || profile.username || '匿名用户',
-          city: profile.city ?? profile.province ?? profile.country ?? '',
-          lat: profile.lat as number,
-          lng: profile.lng as number,
-          gender: profile.gender ?? null,
-          age: profile.age ?? null,
-          bio: profile.bio ?? null,
-          wechat: profile.wechat ?? null,
-          parentContact: Boolean(profile.parent_contact),
-        }))
+          .filter((profile) => profile.lat !== null && profile.lng !== null)
+          .map((profile) => ({
+            id: profile.id,
+            name: profile.display_name || profile.username || '匿名用户',
+            city: resolveDisplayLocation(profile.country, profile.province, profile.city),
+            lat: profile.lat as number,
+            lng: profile.lng as number,
+            gender: profile.gender ?? null,
+            age: profile.age ?? null,
+            bio: profile.bio ?? null,
+            wechat: profile.wechat ?? null,
+            parentContact: Boolean(profile.parent_contact),
+          }))
 
         if (!cancelled) {
           setUsers(userLocations)
