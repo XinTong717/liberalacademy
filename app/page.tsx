@@ -1,9 +1,6 @@
-import dynamic from 'next/dynamic'
 import { HomeHeader } from '@/components/home-header'
 
-const MapWithAuth = dynamic(() => import('../components/map-with-auth'), {
-  ssr: false,
-})
+import MapWithAuth from '@/components/map-with-auth'
 
 export default function Home() {
   return (
