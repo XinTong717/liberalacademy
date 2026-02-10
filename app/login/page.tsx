@@ -235,30 +235,7 @@ export default function LoginPage() {
         return
       }
 
-      let lat: number | null = null
-      let lng: number | null = null
-
-      try {
-        const coordinates = await fetchCoordinates(country, province, city)
-        if (coordinates) {
-          lat = coordinates.lat
-          lng = coordinates.lng
-        }
-      } catch (error) {
-        console.error('Geocode failed during registration', error)
-      }
-
-      const profilePayload = {
-        id: user.id,
-        username,
-        display_name: username,
-        country,
-        province,
-        city,
-        lat,
-        lng,
-      }
-
+      // Ensure we have a session before calling geocode API (which requires authentication)
       let sessionUserId = signUpData.session?.user?.id
       if (!sessionUserId) {
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -283,6 +260,32 @@ export default function LoginPage() {
         setPassword('')
         setConfirmPassword('')
         return
+      }
+
+      // Now that we have a session, we can call geocode API (which requires authentication)
+      let lat: number | null = null
+      let lng: number | null = null
+
+      try {
+        const coordinates = await fetchCoordinates(country, province, city)
+        if (coordinates) {
+          lat = coordinates.lat
+          lng = coordinates.lng
+        }
+      } catch (error) {
+        console.error('Geocode failed during registration', error)
+        // Continue without coordinates - user can update profile later
+      }
+
+      const profilePayload = {
+        id: user.id,
+        username,
+        display_name: username,
+        country,
+        province,
+        city,
+        lat,
+        lng,
       }
       
       const { error: insertError } = await supabase
