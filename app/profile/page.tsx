@@ -206,8 +206,19 @@ export default function ProfilePage() {
         return
       }
 
-      const addressStr = [province, city].filter(Boolean).join('')
-      const cityLimit = city || province || '全国'
+      // 1. 清洗数据：如果选了“其他”，就把它视为空字符串
+      // 这样地址就会自动回退到上一级（比如选了“其他”市，就只查省的坐标）
+      const effectiveCity = city === '其他' ? '' : city
+      const effectiveProvince = province === '其他' ? '' : province
+
+      // 2. 构造更“干净”的地址字符串
+      // 原来是: [province, city].filter(Boolean).join('') -> "广东省其他" (错误)
+      // 现在是: "广东省" (正确，高德能识别)
+      const addressStr = [effectiveProvince, effectiveCity].filter(Boolean).join('')
+      
+      // 3. 限制查询范围也同步处理
+      const cityLimit = effectiveCity || effectiveProvince || '全国'
+
       let lat: number | null = null
       let lng: number | null = null
 
