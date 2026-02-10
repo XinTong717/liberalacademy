@@ -257,6 +257,7 @@ export default function Map({ isLoggedIn }: MapProps) {
   }, [isLoggedIn])
 
   useEffect(() => {
+    if (!loaded || !amapRef.current) return
 
     const controller = new AbortController()
 
@@ -289,7 +290,7 @@ export default function Map({ isLoggedIn }: MapProps) {
     return () => {
       controller.abort()
     }
-  }, [])
+  }, [loaded])
 
   useEffect(() => {
     const map = mapRef.current
