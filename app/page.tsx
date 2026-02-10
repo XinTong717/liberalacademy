@@ -1,11 +1,23 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Map from '@/components/map'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+// Lazy load map component to reduce initial bundle size
+const Map = dynamic(() => import('@/components/map'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-screen w-full items-center justify-center bg-[#fbf7ee]">
+      <div className="text-center">
+        <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#46688f] border-t-transparent"></div>
+        <p className="text-sm text-[#5f83ad]">加载地图中...</p>
+      </div>
+    </div>
+  ),
+})
 
 export default function Home() {
   const [authState, setAuthState] = useState<'loading' | 'in' | 'out'>('loading')
