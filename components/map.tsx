@@ -1,18 +1,16 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { usePostHog } from 'posthog-js/react'
 
-type MarkerUser = {
+type User = {
   id: string
   name: string
   city: string
   lat: number
   lng: number
-}
-
-type UserDetails = {
   gender?: string | null
   age?: number | null
   bio?: string | null
@@ -20,7 +18,7 @@ type UserDetails = {
   parentContact?: boolean
 }
 
-type PositionedUser = MarkerUser & {
+type PositionedUser = User & {
   position: [number, number]
 }
 
@@ -39,7 +37,7 @@ function loadAMap(key: string): Promise<any> {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') return
 
-    ;(window as any)._AMapSecurityConfig = {
+    (window as any)._AMapSecurityConfig = {
       serviceHost: `${window.location.origin}/_AMapService`,
     }
 
@@ -65,8 +63,40 @@ function loadAMap(key: string): Promise<any> {
   })
 }
 
-const spreadUsers = (userList: MarkerUser[]): PositionedUser[] => {
-  const grouped = new globalThis.Map<string, MarkerUser[]>()
+const isOtherCity = (value?: string | null) => value === '其他' || value === '其他城市'
+const isOtherProvince = (value?: string | null) => value === '其他地区' || value === '其他'
+
+const resolveDisplayLocation = (
+  country?: string | null,
+  province?: string | null,
+  city?: string | null
+) => {
+  const trimmedCity = city?.trim() ?? ''
+  const trimmedProvince = province?.trim() ?? ''
+  const trimmedCountry = country?.trim() ?? ''
+
+  if (trimmedCity) {
+    if (!isOtherCity(trimmedCity)) {
+      return trimmedCity
+    }
+    if (trimmedProvince && !isOtherProvince(trimmedProvince)) {
+      return trimmedProvince
+    }
+    return trimmedCountry
+  }
+
+  if (trimmedProvince) {
+    if (!isOtherProvince(trimmedProvince)) {
+      return trimmedProvince
+    }
+    return trimmedCountry
+  }
+
+  return trimmedCountry
+}
+
+const spreadUsers = (userList: User[]): PositionedUser[] => {
+  const grouped = new globalThis.Map<string, User[]>()
   const results: PositionedUser[] = []
 
   userList.forEach((user) => {
@@ -105,59 +135,15 @@ const spreadUsers = (userList: MarkerUser[]): PositionedUser[] => {
   return results
 }
 
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-
-const buildInfoRows = (user: MarkerUser, details?: UserDetails | null, detailsError?: string | null) => {
-  const infoRows = [`<div><strong style="font-size:14px;color:#14304d;">${escapeHtml(user.name)}</strong></div>`]
-
-  if (user.city) {
-    infoRows.push(`<div>所在地：${escapeHtml(user.city)}</div>`)
-  }
-
-  if (detailsError) {
-    infoRows.push(`<div style="margin-top:4px;color:#b85a43;">${escapeHtml(detailsError)}</div>`)
-    return infoRows.join('')
-  }
-
-  if (!details) {
-    infoRows.push('<div style="margin-top:4px;color:#58708a;">正在加载详细信息…</div>')
-    return infoRows.join('')
-  }
-
-  if (details.gender) infoRows.push(`<div>性别：${escapeHtml(String(details.gender))}</div>`)
-  if (details.age) infoRows.push(`<div>年龄：${escapeHtml(String(details.age))}</div>`)
-  if (details.bio) infoRows.push(`<div>自我介绍：${escapeHtml(details.bio)}</div>`)
-  if (details.parentContact) infoRows.push('<div>注册联系人：家长</div>')
-
-  const wechatValue = details.wechat ? escapeHtml(details.wechat) : ''
-  if (details.wechat) {
-    infoRows.push(`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-      <button id="wechat-reveal-${user.id}" style="border:1px solid #d3b792;background:#fef7eb;color:#8a5a2b;border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer;">点击显示微信号（添加时请自我介绍）</button>
-      <span id="wechat-value-${user.id}" style="display:none;font-weight:600;color:#1a3553;">${wechatValue}</span>
-      <button id="wechat-copy-${user.id}" data-wechat="${wechatValue}" disabled style="border:1px solid #c8d7e6;background:#f0f5fb;color:#4b6b89;border-radius:999px;padding:2px 10px;font-size:12px;opacity:0.5;cursor:not-allowed;">复制微信号</button>
-    </div>`)
-  }
-
-  return infoRows.join('')
-}
-
 export default function Map({ isLoggedIn }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
   const markerIconRef = useRef<any>(null)
   const amapRef = useRef<any>(null)
-  const userDetailsCacheRef = useRef(new globalThis.Map<string, UserDetails | null>())
-  
   const [error, setError] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
-  const [users, setUsers] = useState<MarkerUser[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [usersError, setUsersError] = useState<string | null>(null)
   const [usersLoading, setUsersLoading] = useState(false)
   const [showLoginHint, setShowLoginHint] = useState(false)
@@ -259,38 +245,59 @@ export default function Map({ isLoggedIn }: MapProps) {
   useEffect(() => {
     if (!loaded || !amapRef.current) return
 
-    const controller = new AbortController()
+    let cancelled = false
 
     const loadUsers = async () => {
       setUsersLoading(true)
       setUsersError(null)
       try {
-        const res = await fetch('/api/map/markers', {
-          method: 'GET',
-          signal: controller.signal,
-        })
+        const supabase = createClient()
+        const { data, error: profilesError } = await supabase
+          .from('profiles')
+          .select(
+            'id, username, display_name, nickname, gender, age, bio, wechat, parent_contact, country, province, city, lat, lng'
+          )
+          .not('lat', 'is', null)
+          .not('lng', 'is', null)
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`)
+        if (profilesError) throw profilesError
+
+        const userLocations: User[] = (data ?? [])
+          .filter((profile) => profile.lat !== null && profile.lng !== null)
+          .map((profile) => ({
+            id: profile.id,
+            name: profile.display_name || profile.username || '匿名用户',
+            city: resolveDisplayLocation(profile.country, profile.province, profile.city),
+            lat: profile.lat as number,
+            lng: profile.lng as number,
+            gender: profile.gender ?? null,
+            age: profile.age ?? null,
+            bio: profile.bio ?? null,
+            wechat: profile.wechat ?? null,
+            parentContact: Boolean(profile.parent_contact),
+          }))
+
+        if (!cancelled) {
+          setUsers(userLocations)
         }
-
-        const payload = await res.json()
-        setUsers(Array.isArray(payload?.markers) ? payload.markers : [])
       } catch (e: any) {
-        if (e?.name === 'AbortError') return
-        console.error(e)
-        setUsersError(`加载用户失败：${String(e?.message ?? e)}`)
+        if (!cancelled) {
+          console.error(e)
+          setUsersError(`加载用户失败：${String(e?.message ?? e)}`)
+        }
       } finally {
-        setUsersLoading(false)
+        if (!cancelled) {
+          setUsersLoading(false)
+        }
       }
     }
 
     loadUsers()
 
     return () => {
-      controller.abort()
+      cancelled = true
     }
-  }, [loaded])
+  }, [loaded, isLoggedIn])
 
   useEffect(() => {
     const map = mapRef.current
@@ -304,17 +311,25 @@ export default function Map({ isLoggedIn }: MapProps) {
       markersRef.current = []
     }
 
-    const positionedUsers = spreadUsers(users)
+    const escapeHtml = (value: string) =>
+      value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
 
-    positionedUsers.forEach((u) => {
-      const marker = new AMap.Marker({
+        const positionedUsers = spreadUsers(users)
+
+        positionedUsers.forEach((u) => {
+        const marker = new AMap.Marker({
         position: u.position,
         title: isLoggedIn ? `${u.name} - ${u.city}` : '登录后查看用户信息',
         icon: markerIcon,
         offset: new AMap.Pixel(-16, -36),
       })
 
-      marker.on('click', async () => {
+      marker.on('click', () => {
         if (!isLoggedIn) {
           posthog?.capture('click_marker_anonymous', { city: u.city })
           setShowLoginHint(true)
@@ -325,37 +340,34 @@ export default function Map({ isLoggedIn }: MapProps) {
           target_user_name: u.name,
           target_city: u.city,
         })
+        
+        const wechatValue = u.wechat ? escapeHtml(u.wechat) : ''
+        const wechatRow = u.wechat
+          ? `<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+              <button id="wechat-reveal-${u.id}" style="border:1px solid #d3b792;background:#fef7eb;color:#8a5a2b;border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer;">点击显示微信号（添加时请自我介绍）</button>
+              <span id="wechat-value-${u.id}" style="display:none;font-weight:600;color:#1a3553;">${wechatValue}</span>
+              <button id="wechat-copy-${u.id}" data-wechat="${wechatValue}" disabled style="border:1px solid #c8d7e6;background:#f0f5fb;color:#4b6b89;border-radius:999px;padding:2px 10px;font-size:12px;opacity:0.5;cursor:not-allowed;">复制微信号</button>
+            </div>`
+          : ''
+
+        const infoRows = [
+          `<div><strong style="font-size:14px;color:#14304d;">${escapeHtml(u.name)}</strong></div>`,
+          u.gender ? `<div>性别：${escapeHtml(String(u.gender))}</div>` : '',
+          u.age ? `<div>年龄：${escapeHtml(String(u.age))}</div>` : '',
+          u.city ? `<div>所在地：${escapeHtml(u.city)}</div>` : '',
+          u.bio ? `<div>自我介绍：${escapeHtml(u.bio)}</div>` : '',
+          wechatRow,
+          u.parentContact ? '<div>注册联系人：家长</div>' : '',
+        ]
+          .filter(Boolean)
+          .join('')
           
         const infoWindow = new AMap.InfoWindow({
-          content: `<div style="padding:10px 12px;color:#1a3553;line-height:1.6;font-size:13px;">${buildInfoRows(u)}</div>`,
+          content: `<div style="padding:10px 12px;color:#1a3553;line-height:1.6;font-size:13px;">${infoRows}</div>`,
         })
         infoWindow.open(map, u.position)
       
-        let details = userDetailsCacheRef.current.get(u.id)
-        let detailsError: string | null = null
-
-        if (details === undefined) {
-          try {
-            const detailRes = await fetch(`/api/map/profiles/${encodeURIComponent(u.id)}`)
-            if (!detailRes.ok) {
-              throw new Error(`HTTP ${detailRes.status}`)
-            }
-            const payload = await detailRes.json()
-            const fetchedDetails: UserDetails | null = payload?.detail ?? null
-            details = fetchedDetails
-            userDetailsCacheRef.current.set(u.id, fetchedDetails)
-          } catch (e: any) {
-            console.error(e)
-            detailsError = '加载详细信息失败，请稍后重试。'
-            details = null
-          }
-        }
-
-        infoWindow.setContent(
-          `<div style="padding:10px 12px;color:#1a3553;line-height:1.6;font-size:13px;">${buildInfoRows(u, details, detailsError)}</div>`
-        )
-
-        if (details?.wechat) {
+        if (u.wechat) {
           setTimeout(() => {
             const revealButton = document.getElementById(`wechat-reveal-${u.id}`) as HTMLButtonElement | null
             const wechatSpan = document.getElementById(`wechat-value-${u.id}`) as HTMLSpanElement | null
@@ -378,7 +390,7 @@ export default function Map({ isLoggedIn }: MapProps) {
             }
 
             const handleCopy = async () => {
-              const wechatText = details?.wechat ?? ''
+              const wechatText = u.wechat ?? ''
               if (!wechatText) return
               if (!navigator.clipboard?.writeText) {
                 copyButton.textContent = '无法复制'
