@@ -18,6 +18,10 @@ type User = {
   parentContact?: boolean
 }
 
+type PositionedUser = User & {
+  position: [number, number]
+}
+
 type MapProps = {
   isLoggedIn: boolean
 }
@@ -89,6 +93,46 @@ const resolveDisplayLocation = (
   }
 
   return trimmedCountry
+}
+
+const spreadUsers = (userList: User[]): PositionedUser[] => {
+  const grouped = new globalThis.Map<string, User[]>()
+  const results: PositionedUser[] = []
+
+  userList.forEach((user) => {
+    const key = `${user.lat.toFixed(5)}|${user.lng.toFixed(5)}`
+    const list = grouped.get(key)
+    if (list) {
+      list.push(user)
+    } else {
+      grouped.set(key, [user])
+    }
+  })
+
+  grouped.forEach((group) => {
+    if (group.length === 1) {
+      const user = group[0]
+      results.push({ ...user, position: [user.lng, user.lat] })
+      return
+    }
+
+    const radius = 0.02
+    const step = (2 * Math.PI) / group.length
+    const sorted = [...group].sort((a, b) => a.id.localeCompare(b.id))
+
+    sorted.forEach((user, index) => {
+      const angle = index * step
+      const latOffset = radius * Math.sin(angle)
+      const lngFactor = Math.cos((user.lat * Math.PI) / 180) || 1
+      const lngOffset = (radius * Math.cos(angle)) / lngFactor
+      results.push({
+        ...user,
+        position: [user.lng + lngOffset, user.lat + latOffset],
+      })
+    })
+  })
+
+  return results
 }
 
 export default function Map({ isLoggedIn }: MapProps) {
@@ -275,9 +319,11 @@ export default function Map({ isLoggedIn }: MapProps) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;')
 
-    users.forEach((u) => {
-      const marker = new AMap.Marker({
-        position: [u.lng, u.lat],
+        const positionedUsers = spreadUsers(users)
+
+        positionedUsers.forEach((u) => {
+        const marker = new AMap.Marker({
+        position: u.position,
         title: isLoggedIn ? `${u.name} - ${u.city}` : '登录后查看用户信息',
         icon: markerIcon,
         offset: new AMap.Pixel(-16, -36),
@@ -319,7 +365,7 @@ export default function Map({ isLoggedIn }: MapProps) {
         const infoWindow = new AMap.InfoWindow({
           content: `<div style="padding:10px 12px;color:#1a3553;line-height:1.6;font-size:13px;">${infoRows}</div>`,
         })
-        infoWindow.open(map, [u.lng, u.lat])
+        infoWindow.open(map, u.position)
       
         if (u.wechat) {
           setTimeout(() => {
