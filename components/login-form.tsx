@@ -65,6 +65,7 @@ export function LoginForm() {
   const [country, setCountry] = useState(defaultCountry)
   const [province, setProvince] = useState('')
   const [city, setCity] = useState('')
+  const [parentContact, setParentContact] = useState(false)
   const [educatorContact, setEducatorContact] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -259,6 +260,7 @@ export function LoginForm() {
         country: string
         province: string
         city: string
+        parent_contact: boolean
         educator_contact: boolean
         lat?: number
         lng?: number
@@ -269,6 +271,7 @@ export function LoginForm() {
         country,
         province,
         city,
+        parent_contact: parentContact,
         educator_contact: educatorContact,
       }
 
@@ -458,14 +461,25 @@ export function LoginForm() {
                   注册信息将保存到后台数据库中。
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-sm text-[#4f6883]">
-                <input
-                  id="educatorContact"
-                  type="checkbox"
-                  checked={educatorContact}
-                  onChange={(e) => setEducatorContact(e.target.checked)}
-                />
-                <label htmlFor="educatorContact">注册联系人是教育支持者</label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-[#4f6883]">
+                  <input
+                    id="parentContact"
+                    type="checkbox"
+                    checked={parentContact}
+                    onChange={(e) => setParentContact(e.target.checked)}
+                  />
+                  <label htmlFor="parentContact">注册联系人是家长</label>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-[#4f6883]">
+                  <input
+                    id="educatorContact"
+                    type="checkbox"
+                    checked={educatorContact}
+                    onChange={(e) => setEducatorContact(e.target.checked)}
+                  />
+                  <label htmlFor="educatorContact">注册联系人是教育支持者</label>
+                </div>
               </div>
             </>
           )}

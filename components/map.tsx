@@ -222,20 +222,20 @@ export default function Map({ isLoggedIn }: MapProps) {
           ),
           parent: createMarkerIcon(
             createMarkerSvg({
-              shellStroke: '#8a7ab5',
-              centerFill: '#dec8f6',
-              centerStroke: '#bea3de',
-              wingStart: '#a7cae8',
-              wingEnd: '#8aaed6',
+              shellStroke: '#a16fbf',
+              centerFill: '#f3c9e6',
+              centerStroke: '#d895c6',
+              wingStart: '#f7b8d9',
+              wingEnd: '#d791c8',
             })
           ),
           educator: createMarkerIcon(
             createMarkerSvg({
-              shellStroke: '#4f8f6b',
-              centerFill: '#bce3c6',
-              centerStroke: '#8bc09b',
-              wingStart: '#7fc9ab',
-              wingEnd: '#5da788',
+              shellStroke: '#3f8a95',
+              centerFill: '#bdeaf1',
+              centerStroke: '#87ccd8',
+              wingStart: '#9cd7f2',
+              wingEnd: '#72b8d6',
             })
           ),
         }
