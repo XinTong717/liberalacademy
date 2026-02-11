@@ -25,20 +25,13 @@ export async function proxyAmapRequest(req: NextRequest, pathParts: string[]) {
   }
 
   const pathStr = pathParts.join('/')
-  // JS SDK 的请求（如 v4/map/styles、v3/log/init）需要走 webapi 域名。
-  // 其余（如 geocode 等）继续走 restapi。
-  const isWebAPI = pathStr.startsWith('v4/map/styles') || pathStr.startsWith('v3/log/')
-  const baseUrl = isWebAPI ? 'https://webapi.amap.com' : 'https://restapi.amap.com'
-
-  const targetUrl = new URL(`${baseUrl}/${pathStr}`)
-
-  // 复制 Query
-  req.nextUrl.searchParams.forEach((value, key) => {
-    targetUrl.searchParams.set(key, value)
-  })
-
-  // 追加密钥
-  targetUrl.searchParams.set('jscode', jscode)
+  // 不同接口在 AMap 的 host 分布并不完全一致。
+  // 为避免单一 host 返回 404，这里按路径优先级尝试并在 404 时回退。
+  const upstreamHosts = pathStr.startsWith('v4/map/styles')
+    ? ['https://webapi.amap.com', 'https://restapi.amap.com']
+    : pathStr.startsWith('v3/log/')
+      ? ['https://restapi.amap.com', 'https://webapi.amap.com']
+      : ['https://restapi.amap.com']
 
   try {
     // 关键：透传请求头，但删除 host/connection
@@ -51,12 +44,37 @@ export async function proxyAmapRequest(req: NextRequest, pathParts: string[]) {
       headers,
     }
 
+    const requestBody = req.method === 'POST' ? await req.text() : undefined
     if (req.method === 'POST') {
-      fetchOptions.body = await req.text()
+      fetchOptions.body = requestBody
     }
 
-    const upstreamRes = await fetchWithRetry(targetUrl.toString(), fetchOptions)
+    let upstreamRes: Response | null = null
 
+    for (const host of upstreamHosts) {
+      const targetUrl = new URL(`${host}/${pathStr}`)
+
+      req.nextUrl.searchParams.forEach((value, key) => {
+        targetUrl.searchParams.set(key, value)
+      })
+
+      targetUrl.searchParams.set('jscode', jscode)
+
+      const currentResponse = await fetchWithRetry(targetUrl.toString(), fetchOptions)
+
+      // 当首选 host 返回 404 时，尝试下一候选 host。
+      if (currentResponse.status === 404 && host !== upstreamHosts[upstreamHosts.length - 1]) {
+        continue
+      }
+
+      upstreamRes = currentResponse
+      break
+    }
+
+    if (!upstreamRes) {
+      return NextResponse.json({ error: 'Proxy Failed', details: 'No upstream response' }, { status: 502 })
+    }
+    
     // 清理返回头
     const responseHeaders = new Headers(upstreamRes.headers)
     responseHeaders.delete('content-encoding')
