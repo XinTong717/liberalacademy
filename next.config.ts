@@ -3,14 +3,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',
 
-  // ✅ 核心修复：添加路由重写
+  // ✅ 核心修复：使用 beforeFiles 提权
+  // 强制在 Next.js 检查系统文件之前进行拦截转发
   async rewrites() {
-    return [
-      {
-        source: '/_AMapService/:path*',
-        destination: '/api/amap/:path*', // 将请求暗中转发给合法的 api 路由
-      },
-    ]
+    return {
+      beforeFiles: [
+        {
+          source: '/_AMapService/:path*',
+          destination: '/api/amap/:path*',
+        },
+      ]
+    }
   },
 
   async headers() {
