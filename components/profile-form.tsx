@@ -250,6 +250,7 @@ export function ProfileForm() {
           changed_city: city,
           changed_gender: gender || null,
         })
+        router.push('/')
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : '发生未知错误'
