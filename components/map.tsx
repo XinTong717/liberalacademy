@@ -116,12 +116,15 @@ const spreadUsers = (userList: User[]): PositionedUser[] => {
       return
     }
 
-    const radius = 0.02
+    const primaryRadius = 0.035
+    const ringSpacing = 0.018
     const step = (2 * Math.PI) / group.length
     const sorted = [...group].sort((a, b) => a.id.localeCompare(b.id))
 
     sorted.forEach((user, index) => {
       const angle = index * step
+      const ringIndex = Math.floor(index / 8)
+      const radius = primaryRadius + ringIndex * ringSpacing
       const latOffset = radius * Math.sin(angle)
       const lngFactor = Math.cos((user.lat * Math.PI) / 180) || 1
       const lngOffset = (radius * Math.cos(angle)) / lngFactor

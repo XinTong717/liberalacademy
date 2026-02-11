@@ -245,7 +245,7 @@ export function ProfileForm() {
       if (saveError) {
         setMessage(`错误: ${saveError.message}`)
       } else {
-        setMessage(hasCoordinateUpdate ? '个人信息已保存！' : '个人信息已保存（坐标未更新，建议稍后重试保存地址）。')
+        setMessage(hasCoordinateUpdate ? '个人信息已保存！' : '个人信息已保存（坐标未更新成功，建议返回首页后重试保存地址）。')
         posthog?.capture('update_profile', {
           changed_city: city,
           changed_gender: gender || null,
