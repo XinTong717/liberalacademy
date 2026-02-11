@@ -28,6 +28,7 @@ export function ProfileForm() {
   const [bio, setBio] = useState('')
   const [wechat, setWechat] = useState('')
   const [parentContact, setParentContact] = useState(false)
+  const [educatorContact, setEducatorContact] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [user, setUser] = useState<User | null>(null)
@@ -94,7 +95,7 @@ export function ProfileForm() {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('username, country, province, city, nickname, gender, age, bio, wechat, parent_contact')
+        .select('username, country, province, city, nickname, gender, age, bio, wechat, parent_contact, educator_contact')
         .eq('id', currentUser.id)
         .maybeSingle()
 
@@ -113,6 +114,7 @@ export function ProfileForm() {
       setBio(profile?.bio ?? '')
       setWechat(profile?.wechat ?? '')
       setParentContact(Boolean(profile?.parent_contact))
+      setEducatorContact(Boolean(profile?.educator_contact))
     }
 
     loadUser()
@@ -217,6 +219,7 @@ export function ProfileForm() {
         bio: string | null
         wechat: string | null
         parent_contact: boolean
+        educator_contact: boolean
         updated_at: string
         lat?: number
         lng?: number
@@ -232,6 +235,7 @@ export function ProfileForm() {
         bio: bio.trim() || null,
         wechat: wechat.trim() || null,
         parent_contact: parentContact,
+        educator_contact: educatorContact,
         updated_at: new Date().toISOString(),
       }
 
@@ -362,14 +366,25 @@ export function ProfileForm() {
             />
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-[#4f6883]">
-            <input
-              id="parentContact"
-              type="checkbox"
-              checked={parentContact}
-              onChange={(e) => setParentContact(e.target.checked)}
-            />
-            <label htmlFor="parentContact">注册联系人是家长</label>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-[#4f6883]">
+              <input
+                id="parentContact"
+                type="checkbox"
+                checked={parentContact}
+                onChange={(e) => setParentContact(e.target.checked)}
+              />
+              <label htmlFor="parentContact">注册联系人是家长</label>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-[#4f6883]">
+              <input
+                id="educatorContact"
+                type="checkbox"
+                checked={educatorContact}
+                onChange={(e) => setEducatorContact(e.target.checked)}
+              />
+              <label htmlFor="educatorContact">注册联系人是教育支持者</label>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

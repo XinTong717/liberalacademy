@@ -65,6 +65,7 @@ export function LoginForm() {
   const [country, setCountry] = useState(defaultCountry)
   const [province, setProvince] = useState('')
   const [city, setCity] = useState('')
+  const [educatorContact, setEducatorContact] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const router = useRouter()
@@ -258,6 +259,7 @@ export function LoginForm() {
         country: string
         province: string
         city: string
+        educator_contact: boolean
         lat?: number
         lng?: number
       } = {
@@ -267,6 +269,7 @@ export function LoginForm() {
         country,
         province,
         city,
+        educator_contact: educatorContact,
       }
 
       if (lat !== null && lng !== null) {
@@ -454,6 +457,15 @@ export function LoginForm() {
                 <p className="mt-2 text-xs text-[#6f8299]">
                   注册信息将保存到后台数据库中。
                 </p>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-[#4f6883]">
+                <input
+                  id="educatorContact"
+                  type="checkbox"
+                  checked={educatorContact}
+                  onChange={(e) => setEducatorContact(e.target.checked)}
+                />
+                <label htmlFor="educatorContact">注册联系人是教育支持者</label>
               </div>
             </>
           )}

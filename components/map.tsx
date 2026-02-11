@@ -16,6 +16,7 @@ type User = {
   bio?: string | null
   wechat?: string | null
   parentContact?: boolean
+  educatorContact?: boolean
 }
 
 type PositionedUser = User & {
@@ -142,7 +143,7 @@ export default function Map({ isLoggedIn }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
-  const markerIconsRef = useRef<{ default: any; parent: any } | null>(null)
+  const markerIconsRef = useRef<{ default: any; parent: any; educator: any } | null>(null)
   const amapRef = useRef<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
@@ -228,6 +229,15 @@ export default function Map({ isLoggedIn }: MapProps) {
               wingEnd: '#8aaed6',
             })
           ),
+          educator: createMarkerIcon(
+            createMarkerSvg({
+              shellStroke: '#4f8f6b',
+              centerFill: '#bce3c6',
+              centerStroke: '#8bc09b',
+              wingStart: '#7fc9ab',
+              wingEnd: '#5da788',
+            })
+          ),
         }
 
         mapRef.current = new AMap.Map(containerRef.current, {
@@ -293,7 +303,7 @@ export default function Map({ isLoggedIn }: MapProps) {
         const { data, error: profilesError } = await supabase
           .from('profiles')
           .select(
-            'id, username, display_name, nickname, gender, age, bio, wechat, parent_contact, country, province, city, lat, lng'
+            'id, username, display_name, nickname, gender, age, bio, wechat, parent_contact, educator_contact, country, province, city, lat, lng'
           )
           .not('lat', 'is', null)
           .not('lng', 'is', null)
@@ -313,6 +323,7 @@ export default function Map({ isLoggedIn }: MapProps) {
             bio: profile.bio ?? null,
             wechat: profile.wechat ?? null,
             parentContact: Boolean(profile.parent_contact),
+            educatorContact: Boolean(profile.educator_contact),
           }))
 
         if (!cancelled) {
@@ -363,7 +374,11 @@ export default function Map({ isLoggedIn }: MapProps) {
         const marker = new AMap.Marker({
         position: u.position,
         title: isLoggedIn ? `${u.name} - ${u.city}` : '登录后查看用户信息',
-        icon: u.parentContact ? markerIcons.parent : markerIcons.default,
+        icon: u.educatorContact
+          ? markerIcons.educator
+          : u.parentContact
+            ? markerIcons.parent
+            : markerIcons.default,
         offset: new AMap.Pixel(-16, -36),
       })
 
@@ -396,6 +411,7 @@ export default function Map({ isLoggedIn }: MapProps) {
           u.bio ? `<div>自我介绍：${escapeHtml(u.bio)}</div>` : '',
           wechatRow,
           u.parentContact ? '<div>注册联系人：家长</div>' : '',
+          u.educatorContact ? '<div>注册联系人：教育支持者</div>' : '',
         ]
           .filter(Boolean)
           .join('')
