@@ -1,19 +1,18 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {  
+const nextConfig: NextConfig = {
   output: 'standalone',
 
-  // 1. 添加重写规则：欺骗高德，把 /_AMapService 转发给 /api/amap
+  // ✅ 核心修复：添加路由重写
   async rewrites() {
     return [
       {
         source: '/_AMapService/:path*',
-        destination: '/api/amap/:path*',
+        destination: '/api/amap/:path*', // 将请求暗中转发给合法的 api 路由
       },
     ]
   },
 
-  // 2. CSP 配置 (保持之前的优化版本)
   async headers() {
     return [
       {
