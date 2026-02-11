@@ -142,7 +142,7 @@ export default function Map({ isLoggedIn }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
-  const markerIconRef = useRef<any>(null)
+  const markerIconsRef = useRef<{ default: any; parent: any } | null>(null)
   const amapRef = useRef<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
@@ -176,24 +176,59 @@ export default function Map({ isLoggedIn }: MapProps) {
         if (!containerRef.current) throw new Error('Map container not ready')
 
         amapRef.current = AMap
-        const markerIconSvg = `
+        const createMarkerSvg = ({
+          shellStroke,
+          centerFill,
+          centerStroke,
+          wingStart,
+          wingEnd,
+        }: {
+          shellStroke: string
+          centerFill: string
+          centerStroke: string
+          wingStart: string
+          wingEnd: string
+        }) => `
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
             <defs>
               <linearGradient id="wing" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#9ed3d6"/>
-                <stop offset="100%" stop-color="#7bb6c8"/>
+                <stop offset="0%" stop-color="${wingStart}"/>
+                <stop offset="100%" stop-color="${wingEnd}"/>
               </linearGradient>
             </defs>
-            <path d="M16 1.5C9.1 1.5 3.6 7 3.6 13.9c0 6.8 8 17.3 12.4 23.4 4.4-6.1 12.4-16.6 12.4-23.4C28.4 7 22.9 1.5 16 1.5z" fill="#fbf7ee" stroke="#6e8fb1" stroke-width="1.4"/>
-            <circle cx="16" cy="14" r="6.2" fill="#f6d38c" stroke="#e1b76d" stroke-width="1"/>
+            <path d="M16 1.5C9.1 1.5 3.6 7 3.6 13.9c0 6.8 8 17.3 12.4 23.4 4.4-6.1 12.4-16.6 12.4-23.4C28.4 7 22.9 1.5 16 1.5z" fill="#fbf7ee" stroke="${shellStroke}" stroke-width="1.4"/>
+            <circle cx="16" cy="14" r="6.2" fill="${centerFill}" stroke="${centerStroke}" stroke-width="1"/>
             <path d="M8 12.5c3.8-5 8.5-5 16 0" fill="none" stroke="url(#wing)" stroke-width="2" stroke-linecap="round"/>
           </svg>
         `
-        markerIconRef.current = new AMap.Icon({
-          image: `data:image/svg+xml;utf8,${encodeURIComponent(markerIconSvg)}`,
-          size: new AMap.Size(32, 40),
-          imageSize: new AMap.Size(32, 40),
-        })
+
+        const createMarkerIcon = (svg: string) =>
+          new AMap.Icon({
+            image: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+            size: new AMap.Size(32, 40),
+            imageSize: new AMap.Size(32, 40),
+          })
+
+        markerIconsRef.current = {
+          default: createMarkerIcon(
+            createMarkerSvg({
+              shellStroke: '#6e8fb1',
+              centerFill: '#f6d38c',
+              centerStroke: '#e1b76d',
+              wingStart: '#9ed3d6',
+              wingEnd: '#7bb6c8',
+            })
+          ),
+          parent: createMarkerIcon(
+            createMarkerSvg({
+              shellStroke: '#8a7ab5',
+              centerFill: '#dec8f6',
+              centerStroke: '#bea3de',
+              wingStart: '#a7cae8',
+              wingEnd: '#8aaed6',
+            })
+          ),
+        }
 
         mapRef.current = new AMap.Map(containerRef.current, {
           zoom: 5,
@@ -305,9 +340,9 @@ export default function Map({ isLoggedIn }: MapProps) {
   useEffect(() => {
     const map = mapRef.current
     const AMap = amapRef.current
-    const markerIcon = markerIconRef.current
+    const markerIcons = markerIconsRef.current
 
-    if (!map || !AMap || !markerIcon) return
+    if (!map || !AMap || !markerIcons) return
 
     if (markersRef.current.length) {
       markersRef.current.forEach((marker) => map.remove(marker))
@@ -328,7 +363,7 @@ export default function Map({ isLoggedIn }: MapProps) {
         const marker = new AMap.Marker({
         position: u.position,
         title: isLoggedIn ? `${u.name} - ${u.city}` : '登录后查看用户信息',
-        icon: markerIcon,
+        icon: u.parentContact ? markerIcons.parent : markerIcons.default,
         offset: new AMap.Pixel(-16, -36),
       })
 
