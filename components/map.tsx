@@ -116,8 +116,8 @@ const spreadUsers = (userList: User[]): PositionedUser[] => {
       return
     }
 
-    const primaryRadius = 0.035
-    const ringSpacing = 0.018
+    const primaryRadius = 0.055
+    const ringSpacing = 0.038
     const step = (2 * Math.PI) / group.length
     const sorted = [...group].sort((a, b) => a.id.localeCompare(b.id))
 
