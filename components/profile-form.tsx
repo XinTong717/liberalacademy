@@ -346,7 +346,7 @@ export function ProfileForm() {
             <textarea
               id="bio"
               rows={4}
-              placeholder="介绍一下你自己...可以是自休学状态、性格爱好等，任何你觉得会帮助你找到合适的同伴的信息~"
+              placeholder="介绍一下你自己...可以是自休学状态、性格爱好等，任何你觉得会帮助你找到合适的同伴的信息~教育支持者可填写自己提供的支持内容~"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               className="w-full rounded-md border border-[#d8c6ab] bg-[#fffefb] px-3 py-2 text-sm text-[#2f4b66] outline-none focus:border-[#7ea0bf] focus:ring-2 focus:ring-[#dce9f4]"

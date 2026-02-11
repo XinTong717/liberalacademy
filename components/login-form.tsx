@@ -13,6 +13,14 @@ import { countryCoordinates } from '@/lib/country-coordinates'
 const USERNAME_RULE = /^[a-zA-Z0-9._-]{3,30}$/
 const PASSWORD_MIN_LENGTH = 6
 
+const getLocalizedAuthError = (message: string) => {
+  if (message === 'Invalid login credentials') {
+    return '用户名或密码错误，请检查后重试。'
+  }
+
+  return message
+}
+
 const fetchCoordinates = async (
   country: string,
   province: string,
@@ -137,7 +145,7 @@ export function LoginForm() {
         })
 
         if (error) {
-          setMessage(`错误: ${error.message}`)
+          setMessage(`错误: ${getLocalizedAuthError(error.message)}`)
           return
         }
 
