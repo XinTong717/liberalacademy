@@ -41,8 +41,9 @@ async function handleProxy(req: NextRequest, pathParts: string[]) {
   }
 
   const pathStr = pathParts.join('/')
-  // 区分 V4 (WebAPI) 和 V3 (RestAPI)
-  const isWebAPI = pathStr.startsWith('v4/map/styles')
+  // JS SDK 的请求（如 v4/map/styles、v3/log/init）需要走 webapi 域名。
+  // 其余（如 geocode 等）继续走 restapi。
+  const isWebAPI = pathStr.startsWith('v4/map/styles') || pathStr.startsWith('v3/log/')
   const baseUrl = isWebAPI ? 'https://webapi.amap.com' : 'https://restapi.amap.com'
   
   const targetUrl = new URL(`${baseUrl}/${pathStr}`)
