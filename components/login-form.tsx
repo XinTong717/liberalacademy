@@ -17,37 +17,44 @@ const fetchCoordinates = async (
   country: string,
   province: string,
   city: string
-): Promise<{ lat: number; lng: number } | null> => {
+): Promise<{ coordinates: { lat: number; lng: number } | null; reason?: string }> => {
   if (country && country !== '中国' && countryCoordinates[country]) {
     const [lng, lat] = countryCoordinates[country]
     const randomOffset = () => (Math.random() - 0.5) * 0.1
-    return { lat: lat + randomOffset(), lng: lng + randomOffset() }
+    return { coordinates: { lat: lat + randomOffset(), lng: lng + randomOffset() } }
   }
 
-  const address = [province, city].filter(Boolean).join('')
-  if (!address) return null
+  const effectiveCity = city === '其他' ? '' : city
+  const effectiveProvince = province === '其他' ? '' : province
+  const address = [effectiveProvince, effectiveCity].filter(Boolean).join('')
+  if (!address) return { coordinates: null, reason: 'empty_address' }
 
-  const response = await fetch('/api/geocode', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      address,
-      city: city || province || '全国',
-    }),
-  })
+  try {
+    const response = await fetch('/api/geocode', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        address,
+        city: effectiveCity || effectiveProvince || '全国',
+      }),
+    })
 
-  if (!response.ok) {
-    return null
+    if (!response.ok) {
+      return { coordinates: null, reason: `http_${response.status}` }
+    }
+
+    const data = await response.json()
+    if (typeof data?.lat === 'number' && typeof data?.lng === 'number') {
+      return { coordinates: { lat: data.lat, lng: data.lng } }
+    }
+
+    return { coordinates: null, reason: 'no_result' }
+  } catch (error) {
+    console.error('Geocoding failed', error)
+    return { coordinates: null, reason: 'network_error' }
   }
-
-  const data = await response.json()
-  if (typeof data?.lat === 'number' && typeof data?.lng === 'number') {
-    return { lat: data.lat, lng: data.lng }
-  }
-
-  return null
 }
 
 export function LoginForm() {
@@ -238,26 +245,33 @@ export function LoginForm() {
       let lat: number | null = null
       let lng: number | null = null
 
-      try {
-        const coordinates = await fetchCoordinates(country, province, city)
-        if (coordinates) {
-          lat = coordinates.lat
-          lng = coordinates.lng
-        }
-      } catch (error) {
-        console.error('Geocode failed during registration', error)
-        // Continue without coordinates - user can update profile later
+      const geocodeResult = await fetchCoordinates(country, province, city)
+      if (geocodeResult.coordinates) {
+        lat = geocodeResult.coordinates.lat
+        lng = geocodeResult.coordinates.lng
       }
 
-      const profilePayload = {
+      const profilePayload: {
+        id: string
+        username: string
+        display_name: string
+        country: string
+        province: string
+        city: string
+        lat?: number
+        lng?: number
+      } = {
         id: user.id,
         username,
         display_name: username,
         country,
         province,
         city,
-        lat,
-        lng,
+      }
+
+      if (lat !== null && lng !== null) {
+        profilePayload.lat = lat
+        profilePayload.lng = lng
       }
 
       const { error: insertError } = await supabase
@@ -269,7 +283,7 @@ export function LoginForm() {
         return
       }
 
-      setMessage('注册成功！现在可以使用用户名和密码登录。')
+      setMessage(geocodeResult.coordinates ? '注册成功！现在可以使用用户名和密码登录。' : '注册成功！地址坐标暂时未解析，登录后可在“完善个人信息”页重新保存地址。')
       setMode('login')
       setPassword('')
       setConfirmPassword('')

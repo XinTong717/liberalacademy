@@ -4,6 +4,41 @@ import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
+interface CachedCoordinate {
+    lat: number
+    lng: number
+    expiresAt: number
+  }
+  
+  const geocodeCache = new Map<string, CachedCoordinate>()
+  const CACHE_TTL_MS = 24 * 60 * 60 * 1000
+  
+  async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      return await fetch(url, { signal: controller.signal })
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
+  
+  async function fetchGeocodeWithRetry(url: string, retries: number = 3): Promise<Response | null> {
+    for (let index = 0; index < retries; index += 1) {
+      try {
+        return await fetchWithTimeout(url, 6000)
+      } catch (error) {
+        if (index === retries - 1) {
+          console.error('AMAP geocode request failed after retries', error)
+          return null
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500 * (index + 1)))
+      }
+    }
+  
+    return null
+  }
+  
 /**
  * Validate and sanitize input strings
  */
@@ -130,8 +165,33 @@ export async function POST(req: NextRequest) {
       url.searchParams.set('city', cityValidation.sanitized)
     }
 
-    const res = await fetch(url.toString())
-    
+    const cacheKey = `${addressValidation.sanitized}|${cityValidation.sanitized ?? ''}`
+    const cached = geocodeCache.get(cacheKey)
+    if (cached && cached.expiresAt > Date.now()) {
+      return NextResponse.json(
+        {
+          lat: cached.lat,
+          lng: cached.lng,
+        },
+        {
+          headers: {
+            'X-RateLimit-Limit': '10',
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': new Date(rateLimitResult.resetAt).toISOString(),
+            'X-Geocode-Cache': 'HIT',
+          },
+        }
+      )
+    }
+
+    const res = await fetchGeocodeWithRetry(url.toString())
+    if (!res) {
+      return NextResponse.json(
+        { error: 'Geocoding service unavailable' },
+        { status: 502 }
+      )
+    }
+
     if (!res.ok) {
       console.error('AMAP API error:', res.status, res.statusText)
       return NextResponse.json(
@@ -148,17 +208,31 @@ export async function POST(req: NextRequest) {
 
     const location = data.geocodes[0].location // 格式 "lng,lat"
     const [lngStr, latStr] = location.split(',')
+const lat = parseFloat(latStr)
+    const lng = parseFloat(lngStr)
+
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+      console.error('AMAP returned invalid coordinate format:', location)
+      return NextResponse.json({ lat: null, lng: null })
+    }
+
+    geocodeCache.set(cacheKey, {
+      lat,
+      lng,
+      expiresAt: Date.now() + CACHE_TTL_MS,
+    })
 
     return NextResponse.json(
       {
-        lat: parseFloat(latStr),
-        lng: parseFloat(lngStr),
+        lat,
+        lng,
       },
       {
         headers: {
           'X-RateLimit-Limit': '10',
           'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
           'X-RateLimit-Reset': new Date(rateLimitResult.resetAt).toISOString(),
+          'X-Geocode-Cache': 'MISS',
         },
       }
     )

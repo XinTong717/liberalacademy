@@ -194,16 +194,33 @@ export function ProfileForm() {
 
       let lat: number | null = null
       let lng: number | null = null
+      let hasCoordinateUpdate = false
 
       if (addressStr || (country && country !== '中国')) {
         const coordinates = await calculateCoordinates(addressStr, cityLimit)
         if (coordinates) {
           lat = coordinates.lat
           lng = coordinates.lng
+          hasCoordinateUpdate = true
         }
       }
 
-      const profilePayload = {
+      const profilePayload: {
+        id: string
+        country: string
+        province: string
+        city: string
+        nickname: string | null
+        display_name: string | null
+        gender: Gender | null
+        age: number | null
+        bio: string | null
+        wechat: string | null
+        parent_contact: boolean
+        updated_at: string
+        lat?: number
+        lng?: number
+      } = {
         id: currentUser.id,
         country,
         province,
@@ -216,8 +233,11 @@ export function ProfileForm() {
         wechat: wechat.trim() || null,
         parent_contact: parentContact,
         updated_at: new Date().toISOString(),
-        lat,
-        lng,
+      }
+
+      if (hasCoordinateUpdate && lat !== null && lng !== null) {
+        profilePayload.lat = lat
+        profilePayload.lng = lng
       }
 
       const { error: saveError } = await supabase.from('profiles').upsert(profilePayload)
@@ -225,7 +245,7 @@ export function ProfileForm() {
       if (saveError) {
         setMessage(`错误: ${saveError.message}`)
       } else {
-        setMessage('个人信息已保存！')
+        setMessage(hasCoordinateUpdate ? '个人信息已保存！' : '个人信息已保存（坐标未更新，建议稍后重试保存地址）。')
         posthog?.capture('update_profile', {
           changed_city: city,
           changed_gender: gender || null,
