@@ -222,11 +222,11 @@ export default function Map({ isLoggedIn }: MapProps) {
           ),
           parent: createMarkerIcon(
             createMarkerSvg({
-              shellStroke: '#a16fbf',
-              centerFill: '#f3c9e6',
-              centerStroke: '#d895c6',
-              wingStart: '#f7b8d9',
-              wingEnd: '#d791c8',
+              shellStroke: '#8a7ab5',
+              centerFill: '#dec8f6',
+              centerStroke: '#bea3de',
+              wingStart: '#a7cae8',
+              wingEnd: '#8aaed6',
             })
           ),
           educator: createMarkerIcon(
