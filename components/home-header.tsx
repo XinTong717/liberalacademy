@@ -19,7 +19,7 @@ export function HomeHeader() {
           />
           <div>
             <h1 className="text-lg font-bold leading-tight text-[#46688f] sm:text-2xl">自由学社</h1>
-            <p className="text-xs font-medium text-[#5f83ad] sm:text-sm">自休学社区地图</p>
+            <p className="text-xs font-medium text-[#5f83ad] sm:text-sm">探索教育社区地图</p>
           </div>
         </div>
 

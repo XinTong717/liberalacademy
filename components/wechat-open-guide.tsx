@@ -62,7 +62,7 @@ export default function WxGuide() {
             </div>
             <div>
               <div className="text-lg font-semibold">自由学社</div>
-              <div className="text-xs text-white/70">自休学社区地图</div>
+              <div className="text-xs text-white/70">探索教育社区地图</div>
             </div>
           </div>
 
